@@ -1,9 +1,46 @@
 export default function Footer() {
   const lang = "fr"; // You can make this dynamic if needed
+
+  const TIERS = [
+    { min: 1, max: 9, price: "5,00" },
+    { min: 10, max: 49, price: "3,50" },
+    { min: 50, max: 99, price: "3,00" },
+    { min: 100, max: 199, price: "2,00" },
+    { min: 200, max: 499, price: "1,80" },
+    { min: 500, max: null, price: "1,50" },
+  ];
   
   return (
     <footer className="border-t border-border glass backdrop-blur-xl py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Volume Pricing Section */}
+        <div className="mb-12 pb-8 border-b border-border">
+          <h3 className="text-lg font-bold text-t-primary mb-6 text-center">
+            {lang === "fr" ? "Tarifs Dégressifs" : "Volume Pricing"}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-5xl mx-auto">
+            {TIERS.map((tier, i) => {
+              const isLast = i === TIERS.length - 1;
+              return (
+                <div
+                  key={i}
+                  className={`p-3 rounded-xl text-center ${
+                    isLast ? "bg-green-dim border border-green/20" : "glass"
+                  }`}>
+                  <p className="text-xs text-t-muted mb-1">
+                    {tier.max ? `${tier.min} – ${tier.max}` : `${tier.min}+`}
+                  </p>
+                  <p className={`text-lg font-bold tabular-nums ${isLast ? "text-green" : "text-t-primary"}`}>
+                    {tier.price}€
+                  </p>
+                  <p className="text-[10px] text-t-muted mt-0.5">/ {lang === "fr" ? "lien" : "link"}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>

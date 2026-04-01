@@ -238,39 +238,6 @@ export default function Offers() {
             </GlassCard>
           </motion.div>
         )}
-
-        {/* Pricing tiers info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="max-w-4xl mx-auto">
-          <GlassCard className="p-8">
-            <h3 className="text-xl font-bold text-t-primary mb-6 text-center">
-              {lang === "fr" ? "Tarifs Dégressifs" : "Volume Pricing"}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {TIERS.map((tier, i) => {
-                const isLast = i === TIERS.length - 1;
-                return (
-                  <div
-                    key={i}
-                    className={`p-4 rounded-xl text-center ${
-                      isLast ? "bg-green-dim border border-green/20" : "bg-surface-hover"
-                    }`}>
-                    <p className="text-sm text-t-muted mb-1">
-                      {tier.max ? `${tier.min} – ${tier.max}` : `${tier.min}+`}
-                    </p>
-                    <p className={`text-xl font-bold tabular-nums ${isLast ? "text-green" : "text-t-primary"}`}>
-                      {tier.price}€
-                    </p>
-                    <p className="text-xs text-t-muted mt-1">/ {lang === "fr" ? "lien" : "link"}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </GlassCard>
-        </motion.div>
       </div>
     </div>
   );
