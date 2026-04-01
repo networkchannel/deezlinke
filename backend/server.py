@@ -1059,7 +1059,6 @@ async def get_geo(request: Request):
 
 # --- Order Routes ---
 @api_router.post("/orders/create")
-@limiter.limit("10/hour")
 async def create_order(req: OrderCreateRequest, request: Request):
     # Validation sécuritaire optionnelle (headers)
     try:
