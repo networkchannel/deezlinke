@@ -9,9 +9,10 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 from bson import ObjectId
+from collections import defaultdict
 import os
 import logging
 import uuid
@@ -20,6 +21,8 @@ import jwt
 import httpx
 import secrets
 import smtplib
+import hashlib
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -48,6 +51,99 @@ SMTP_USERNAME = os.environ.get('SMTP_USERNAME', '')
 SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
 SMTP_FROM_EMAIL = os.environ.get('SMTP_FROM_EMAIL', '')
 SMTP_FROM_NAME = os.environ.get('SMTP_FROM_NAME', 'DeezLink')
+
+# ==================== RATE LIMITING & ANTI-ABUSE SYSTEM ====================
+class RateLimiter:
+    """In-memory rate limiter with sliding window"""
+    def __init__(self):
+        self.requests: Dict[str, List[float]] = defaultdict(list)
+        self.blocked_ips: Dict[str, float] = {}  # IP -> block_until timestamp
+        self.blocked_emails: Dict[str, float] = {}  # Email -> block_until timestamp
+        self.failed_logins: Dict[str, int] = defaultdict(int)  # IP -> failed count
+    
+    def _clean_old_requests(self, key: str, window_seconds: int):
+        """Remove requests outside the time window"""
+        now = time.time()
+        self.requests[key] = [t for t in self.requests[key] if now - t < window_seconds]
+    
+    def is_rate_limited(self, key: str, max_requests: int, window_seconds: int) -> bool:
+        """Check if key has exceeded rate limit"""
+        self._clean_old_requests(key, window_seconds)
+        return len(self.requests[key]) >= max_requests
+    
+    def record_request(self, key: str):
+        """Record a new request"""
+        self.requests[key].append(time.time())
+    
+    def is_ip_blocked(self, ip: str) -> bool:
+        """Check if IP is temporarily blocked"""
+        if ip in self.blocked_ips:
+            if time.time() < self.blocked_ips[ip]:
+                return True
+            del self.blocked_ips[ip]
+        return False
+    
+    def block_ip(self, ip: str, duration_seconds: int = 3600):
+        """Block an IP for a duration"""
+        self.blocked_ips[ip] = time.time() + duration_seconds
+        logger.warning(f"IP {ip} blocked for {duration_seconds}s")
+    
+    def is_email_blocked(self, email: str) -> bool:
+        """Check if email is temporarily blocked"""
+        if email in self.blocked_emails:
+            if time.time() < self.blocked_emails[email]:
+                return True
+            del self.blocked_emails[email]
+        return False
+    
+    def block_email(self, email: str, duration_seconds: int = 300):
+        """Block an email for a duration"""
+        self.blocked_emails[email] = time.time() + duration_seconds
+    
+    def record_failed_login(self, ip: str) -> int:
+        """Record failed login attempt, return total count"""
+        self.failed_logins[ip] += 1
+        count = self.failed_logins[ip]
+        # Block IP after 5 failed attempts
+        if count >= 5:
+            self.block_ip(ip, 900)  # 15 minutes
+            self.failed_logins[ip] = 0
+        return count
+    
+    def clear_failed_logins(self, ip: str):
+        """Clear failed login count on successful login"""
+        self.failed_logins[ip] = 0
+    
+    def get_stats(self) -> dict:
+        """Get rate limiter stats for admin"""
+        return {
+            "blocked_ips": len(self.blocked_ips),
+            "blocked_emails": len(self.blocked_emails),
+            "active_rate_limits": len(self.requests),
+            "blocked_ip_list": list(self.blocked_ips.keys())[:10],
+        }
+
+rate_limiter = RateLimiter()
+
+# Rate limit configurations
+RATE_LIMITS = {
+    "magic_link_ip": {"max": 5, "window": 300},      # 5 per 5 min per IP
+    "magic_link_email": {"max": 3, "window": 300},   # 3 per 5 min per email
+    "login_ip": {"max": 10, "window": 300},          # 10 per 5 min per IP
+    "order_ip": {"max": 20, "window": 3600},         # 20 per hour per IP
+    "order_email": {"max": 10, "window": 3600},      # 10 per hour per email
+    "geo_ip": {"max": 60, "window": 60},             # 60 per min per IP
+}
+
+# Country names mapping
+COUNTRY_NAMES = {
+    "FR": "France", "US": "United States", "GB": "United Kingdom", "DE": "Germany",
+    "ES": "Spain", "IT": "Italy", "BE": "Belgium", "CH": "Switzerland", "CA": "Canada",
+    "MA": "Morocco", "DZ": "Algeria", "TN": "Tunisia", "AE": "UAE", "SA": "Saudi Arabia",
+    "EG": "Egypt", "NL": "Netherlands", "PT": "Portugal", "PL": "Poland", "BR": "Brazil",
+    "MX": "Mexico", "AR": "Argentina", "CO": "Colombia", "JP": "Japan", "KR": "South Korea",
+    "CN": "China", "IN": "India", "RU": "Russia", "AU": "Australia", "NZ": "New Zealand",
+}
 
 # Pricing Packs - 2 packs fixes + custom
 PACKS = [
@@ -393,15 +489,60 @@ def get_client_ip(request: Request) -> str:
     # Fallback to direct connection
     return request.client.host if request.client else "127.0.0.1"
 
-# ==================== ROUTES (NO /api prefix) ====================
+# ==================== ROUTES WITH ANTI-ABUSE PROTECTION ====================
 
 # --- Auth Routes ---
 @api_router.post("/auth/login")
 async def login(req: LoginRequest, request: Request):
+    client_ip = get_client_ip(request)
+    
+    # Check if IP is blocked
+    if rate_limiter.is_ip_blocked(client_ip):
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Try again later.")
+    
+    # Rate limit check
+    rate_key = f"login:{client_ip}"
+    if rate_limiter.is_rate_limited(rate_key, RATE_LIMITS["login_ip"]["max"], RATE_LIMITS["login_ip"]["window"]):
+        raise HTTPException(status_code=429, detail="Too many login attempts. Please wait.")
+    
+    rate_limiter.record_request(rate_key)
+    
     email = req.email.strip().lower()
     user = await db.users.find_one({"email": email})
+    
     if not user or not verify_password(req.password, user.get("password_hash", "")):
+        # Record failed attempt
+        failed_count = rate_limiter.record_failed_login(client_ip)
+        
+        # Log security event
+        await db.security_logs.insert_one({
+            "event": "failed_login",
+            "email": email,
+            "ip": client_ip,
+            "failed_count": failed_count,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Clear failed login count on success
+    rate_limiter.clear_failed_logins(client_ip)
+    
+    # Log successful login
+    await db.security_logs.insert_one({
+        "event": "successful_login",
+        "email": email,
+        "ip": client_ip,
+        "user_id": str(user["_id"]),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Update user's last login and IP
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"last_login": datetime.now(timezone.utc).isoformat(), "last_ip": client_ip}}
+    )
+    
     token = create_access_token(str(user["_id"]), email, user.get("role", "user"))
     response = JSONResponse(content={
         "id": str(user["_id"]),
@@ -425,24 +566,70 @@ async def get_me(user: dict = Depends(get_current_user)):
     user["loyalty_tier"] = get_loyalty_tier(user.get("loyalty_points", 0))
     return user
 
-# --- Magic Link Auth ---
+# --- Magic Link Auth with Anti-Abuse ---
 @api_router.post("/auth/magic")
 async def magic_link_request(req: MagicLinkRequest, request: Request):
+    client_ip = get_client_ip(request)
     email = req.email.strip().lower()
+    
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Invalid email")
+    
+    # Check if IP is blocked
+    if rate_limiter.is_ip_blocked(client_ip):
+        raise HTTPException(status_code=429, detail="Access temporarily blocked. Try again later.")
+    
+    # Check if email is blocked
+    if rate_limiter.is_email_blocked(email):
+        raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait 5 minutes.")
+    
+    # Rate limit by IP
+    ip_key = f"magic_ip:{client_ip}"
+    if rate_limiter.is_rate_limited(ip_key, RATE_LIMITS["magic_link_ip"]["max"], RATE_LIMITS["magic_link_ip"]["window"]):
+        rate_limiter.block_ip(client_ip, 600)  # Block for 10 min
+        await db.security_logs.insert_one({
+            "event": "magic_link_rate_limit_ip",
+            "ip": client_ip,
+            "email": email,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=429, detail="Too many requests from your IP. Please wait.")
+    
+    # Rate limit by email
+    email_key = f"magic_email:{email}"
+    if rate_limiter.is_rate_limited(email_key, RATE_LIMITS["magic_link_email"]["max"], RATE_LIMITS["magic_link_email"]["window"]):
+        rate_limiter.block_email(email, 300)  # Block email for 5 min
+        await db.security_logs.insert_one({
+            "event": "magic_link_rate_limit_email",
+            "ip": client_ip,
+            "email": email,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait 5 minutes.")
+    
+    rate_limiter.record_request(ip_key)
+    rate_limiter.record_request(email_key)
     
     # Generate magic token
     magic_token = secrets.token_urlsafe(32)
     expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
     
-    # Store token in DB
+    # Store token in DB with IP for security tracking
     await db.magic_tokens.delete_many({"email": email})  # Remove old tokens
     await db.magic_tokens.insert_one({
         "email": email,
         "token": magic_token,
         "expiry": expiry.isoformat(),
+        "request_ip": client_ip,
         "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Log the request
+    await db.security_logs.insert_one({
+        "event": "magic_link_requested",
+        "email": email,
+        "ip": client_ip,
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
     # Send email
@@ -462,6 +649,19 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
         raise HTTPException(status_code=401, detail="Token expired")
     
     email = token_doc["email"]
+    client_ip = get_client_ip(request)
+    
+    # Detect country from IP
+    country = "Unknown"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as http_client:
+            resp = await http_client.get(f"http://ip-api.com/json/{client_ip}?fields=status,countryCode")
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("status") == "success":
+                    country = data.get("countryCode", "Unknown")
+    except:
+        pass
     
     # Get or create user
     user = await db.users.find_one({"email": email})
@@ -472,12 +672,30 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
             "name": email.split("@")[0],
             "role": "user",
             "loyalty_points": 0,
+            "country": country,
+            "signup_ip": client_ip,
+            "last_ip": client_ip,
             "created_at": datetime.now(timezone.utc).isoformat()
         })
         user = await db.users.find_one({"_id": result.inserted_id})
+    else:
+        # Update last IP and country if changed
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"last_ip": client_ip, "last_login": datetime.now(timezone.utc).isoformat()}}
+        )
     
     # Delete used token
     await db.magic_tokens.delete_one({"token": req.token})
+    
+    # Log security event
+    await db.security_logs.insert_one({
+        "event": "magic_link_verified",
+        "email": email,
+        "ip": client_ip,
+        "country": country,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
     
     # Create session
     access_token = create_access_token(str(user["_id"]), email, user.get("role", "user"))
@@ -885,6 +1103,7 @@ async def admin_stats(user: dict = Depends(require_admin)):
     total_orders = await db.orders.count_documents({})
     completed_orders = await db.orders.count_documents({"status": "completed"})
     pending_orders = await db.orders.count_documents({"status": {"$in": ["pending", "payment_mock"]}})
+    failed_orders = await db.orders.count_documents({"status": "failed"})
     total_links = await db.links.count_documents({})
     available_links = await db.links.count_documents({"status": "available"})
     sold_links = await db.links.count_documents({"status": "sold"})
@@ -897,21 +1116,191 @@ async def admin_stats(user: dict = Depends(require_admin)):
     revenue_result = await db.orders.aggregate(pipeline).to_list(1)
     total_revenue = revenue_result[0]["total"] if revenue_result else 0
     
+    # Security stats
+    security_stats = rate_limiter.get_stats()
+    
+    # Get recent security events count (last 24h)
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    recent_security_events = await db.security_logs.count_documents({"timestamp": {"$gte": yesterday}})
+    failed_logins_24h = await db.security_logs.count_documents({
+        "event": "failed_login",
+        "timestamp": {"$gte": yesterday}
+    })
+    
     return {
         "total_orders": total_orders,
         "completed_orders": completed_orders,
         "pending_orders": pending_orders,
+        "failed_orders": failed_orders,
         "total_links": total_links,
         "available_links": available_links,
         "sold_links": sold_links,
         "total_revenue": total_revenue,
         "total_users": total_users,
+        "security": {
+            **security_stats,
+            "recent_events_24h": recent_security_events,
+            "failed_logins_24h": failed_logins_24h,
+        }
+    }
+
+@api_router.get("/admin/security/logs")
+async def admin_security_logs(user: dict = Depends(require_admin), skip: int = 0, limit: int = 100, event_type: str = "all"):
+    """Get security logs"""
+    query = {}
+    if event_type != "all":
+        query["event"] = event_type
+    
+    logs = await db.security_logs.find(query, {"_id": 0}).sort("timestamp", -1).skip(skip).to_list(limit)
+    total = await db.security_logs.count_documents(query)
+    
+    # Get unique event types for filtering
+    event_types = await db.security_logs.distinct("event")
+    
+    return {"logs": logs, "total": total, "event_types": event_types}
+
+@api_router.get("/admin/security/blocked")
+async def admin_blocked_list(user: dict = Depends(require_admin)):
+    """Get currently blocked IPs and emails"""
+    return {
+        "blocked_ips": [
+            {"ip": ip, "until": datetime.fromtimestamp(until).isoformat()}
+            for ip, until in rate_limiter.blocked_ips.items()
+        ],
+        "blocked_emails": [
+            {"email": email, "until": datetime.fromtimestamp(until).isoformat()}
+            for email, until in rate_limiter.blocked_emails.items()
+        ],
+    }
+
+@api_router.post("/admin/security/unblock-ip")
+async def admin_unblock_ip(request: Request, user: dict = Depends(require_admin)):
+    """Unblock an IP address"""
+    body = await request.json()
+    ip = body.get("ip")
+    if ip and ip in rate_limiter.blocked_ips:
+        del rate_limiter.blocked_ips[ip]
+        await db.security_logs.insert_one({
+            "event": "admin_unblock_ip",
+            "ip": ip,
+            "admin": user["email"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        return {"message": f"IP {ip} unblocked"}
+    return {"message": "IP not found in block list"}
+
+@api_router.post("/admin/security/block-ip")
+async def admin_block_ip(request: Request, user: dict = Depends(require_admin)):
+    """Manually block an IP address"""
+    body = await request.json()
+    ip = body.get("ip")
+    duration = body.get("duration", 3600)  # Default 1 hour
+    if ip:
+        rate_limiter.block_ip(ip, duration)
+        await db.security_logs.insert_one({
+            "event": "admin_block_ip",
+            "ip": ip,
+            "duration": duration,
+            "admin": user["email"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        return {"message": f"IP {ip} blocked for {duration}s"}
+    raise HTTPException(status_code=400, detail="IP required")
+
+@api_router.get("/admin/users")
+async def admin_users(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50):
+    users = await db.users.find({}, {"password_hash": 0}).sort("created_at", -1).skip(skip).to_list(limit)
+    for u in users:
+        u["_id"] = str(u["_id"])
+        u["loyalty_tier"] = get_loyalty_tier(u.get("loyalty_points", 0))
+    total = await db.users.count_documents({})
+    return {"users": users, "total": total}
+
+@api_router.get("/admin/users/by-country")
+async def admin_users_by_country(user: dict = Depends(require_admin)):
+    """Get users grouped by country with IP-based geo detection"""
+    users = await db.users.find({}, {"password_hash": 0}).to_list(1000)
+    
+    country_stats = defaultdict(lambda: {"count": 0, "revenue": 0, "users": []})
+    
+    for u in users:
+        country = u.get("country", "Unknown")
+        country_stats[country]["count"] += 1
+        country_stats[country]["users"].append({
+            "email": u["email"],
+            "name": u.get("name", ""),
+            "loyalty_points": u.get("loyalty_points", 0),
+            "last_ip": u.get("last_ip", ""),
+            "created_at": u.get("created_at", "")
+        })
+    
+    # Calculate revenue per country from orders
+    for country in country_stats:
+        # Get emails for users in this country
+        emails = [user_data["email"] for user_data in country_stats[country]["users"]]
+        pipeline = [
+            {"$match": {"email": {"$in": emails}, "status": "completed"}},
+            {"$group": {"_id": None, "total": {"$sum": "$price"}}}
+        ]
+        result = await db.orders.aggregate(pipeline).to_list(1)
+        country_stats[country]["revenue"] = result[0]["total"] if result else 0
+        country_stats[country]["country_name"] = COUNTRY_NAMES.get(country, country)
+    
+    return {"countries": dict(country_stats)}
+
+@api_router.get("/admin/analytics")
+async def admin_analytics(user: dict = Depends(require_admin)):
+    """Get advanced analytics for dashboard"""
+    now = datetime.now(timezone.utc)
+    
+    # Orders by day (last 30 days)
+    thirty_days_ago = (now - timedelta(days=30)).isoformat()
+    orders_pipeline = [
+        {"$match": {"created_at": {"$gte": thirty_days_ago}}},
+        {"$group": {
+            "_id": {"$substr": ["$created_at", 0, 10]},
+            "count": {"$sum": 1},
+            "revenue": {"$sum": "$price"}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    orders_by_day = await db.orders.aggregate(orders_pipeline).to_list(30)
+    
+    # Top customers
+    top_customers_pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {"_id": "$email", "total_spent": {"$sum": "$price"}, "order_count": {"$sum": 1}}},
+        {"$sort": {"total_spent": -1}},
+        {"$limit": 10}
+    ]
+    top_customers = await db.orders.aggregate(top_customers_pipeline).to_list(10)
+    
+    # Pack popularity
+    pack_popularity_pipeline = [
+        {"$group": {"_id": "$pack_id", "count": {"$sum": 1}, "revenue": {"$sum": "$price"}}},
+        {"$sort": {"count": -1}}
+    ]
+    pack_popularity = await db.orders.aggregate(pack_popularity_pipeline).to_list(10)
+    
+    # Conversion rate (completed / total)
+    total_orders = await db.orders.count_documents({})
+    completed_orders = await db.orders.count_documents({"status": "completed"})
+    conversion_rate = (completed_orders / total_orders * 100) if total_orders > 0 else 0
+    
+    return {
+        "orders_by_day": orders_by_day,
+        "top_customers": top_customers,
+        "pack_popularity": pack_popularity,
+        "conversion_rate": round(conversion_rate, 2),
     }
 
 @api_router.get("/admin/orders")
-async def admin_orders(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50):
-    orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).to_list(limit)
-    total = await db.orders.count_documents({})
+async def admin_orders(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50, status: str = "all"):
+    query = {}
+    if status != "all":
+        query["status"] = status
+    orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).to_list(limit)
+    total = await db.orders.count_documents(query)
     return {"orders": orders, "total": total}
 
 @api_router.get("/admin/links")

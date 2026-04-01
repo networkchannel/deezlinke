@@ -181,25 +181,181 @@ class DeezLinkAPITester:
         return success
 
     def test_admin_stats(self):
-        """Test GET /admin/stats - should return admin statistics"""
+        """Test GET /admin/stats - should return admin statistics including security stats"""
         if not self.token:
             print("⚠️  Skipping admin stats test - no admin token available")
             return True
             
         success, response = self.run_test(
-            "Admin Statistics",
+            "Admin Statistics with Security Stats",
             "GET",
             "admin/stats",
             200
         )
         if success:
-            expected_fields = ['total_orders', 'completed_orders', 'total_links', 'available_links', 'total_revenue']
+            expected_fields = ['total_orders', 'completed_orders', 'total_links', 'available_links', 'total_revenue', 'security']
             missing_fields = [field for field in expected_fields if field not in response]
             if missing_fields:
                 print(f"   ⚠️  Missing stats fields: {missing_fields}")
             else:
                 print(f"   Orders: {response.get('total_orders')}, Links: {response.get('total_links')}")
+                
+                # Check security stats
+                security = response.get('security', {})
+                if security:
+                    print(f"   Security - Blocked IPs: {security.get('blocked_ips', 0)}, Failed Logins (24h): {security.get('failed_logins_24h', 0)}")
+                else:
+                    print(f"   ⚠️  Missing security stats")
         return success
+
+    def test_admin_security_logs(self):
+        """Test GET /admin/security/logs - should return security event logs"""
+        if not self.token:
+            print("⚠️  Skipping security logs test - no admin token available")
+            return True
+            
+        success, response = self.run_test(
+            "Admin Security Logs",
+            "GET",
+            "admin/security/logs",
+            200
+        )
+        if success:
+            expected_fields = ['logs', 'total', 'event_types']
+            missing_fields = [field for field in expected_fields if field not in response]
+            if missing_fields:
+                print(f"   ⚠️  Missing security logs fields: {missing_fields}")
+            else:
+                logs = response.get('logs', [])
+                print(f"   Found {len(logs)} security logs, Total: {response.get('total', 0)}")
+                if logs:
+                    print(f"   Recent event: {logs[0].get('event', 'N/A')}")
+        return success
+
+    def test_admin_blocked_list(self):
+        """Test GET /admin/security/blocked - should return blocked IPs and emails"""
+        if not self.token:
+            print("⚠️  Skipping blocked list test - no admin token available")
+            return True
+            
+        success, response = self.run_test(
+            "Admin Blocked List",
+            "GET",
+            "admin/security/blocked",
+            200
+        )
+        if success:
+            expected_fields = ['blocked_ips', 'blocked_emails']
+            missing_fields = [field for field in expected_fields if field not in response]
+            if missing_fields:
+                print(f"   ⚠️  Missing blocked list fields: {missing_fields}")
+            else:
+                blocked_ips = response.get('blocked_ips', [])
+                blocked_emails = response.get('blocked_emails', [])
+                print(f"   Blocked IPs: {len(blocked_ips)}, Blocked Emails: {len(blocked_emails)}")
+        return success
+
+    def test_admin_block_ip(self):
+        """Test POST /admin/security/block-ip - should manually block an IP"""
+        if not self.token:
+            print("⚠️  Skipping block IP test - no admin token available")
+            return True
+            
+        test_ip = "192.168.1.100"  # Test IP
+        success, response = self.run_test(
+            "Admin Block IP",
+            "POST",
+            "admin/security/block-ip",
+            200,
+            data={"ip": test_ip, "duration": 300}  # 5 minutes
+        )
+        if success:
+            if 'message' in response:
+                print(f"   ✅ IP blocking response: {response.get('message')}")
+            else:
+                print(f"   ⚠️  Unexpected response format")
+        return success
+
+    def test_admin_users_by_country(self):
+        """Test GET /admin/users/by-country - should return users grouped by country"""
+        if not self.token:
+            print("⚠️  Skipping users by country test - no admin token available")
+            return True
+            
+        success, response = self.run_test(
+            "Admin Users by Country",
+            "GET",
+            "admin/users/by-country",
+            200
+        )
+        if success:
+            if 'countries' in response:
+                countries = response.get('countries', {})
+                print(f"   Found users from {len(countries)} countries")
+                if countries:
+                    # Show top country
+                    top_country = max(countries.items(), key=lambda x: x[1].get('count', 0))
+                    print(f"   Top country: {top_country[0]} with {top_country[1].get('count', 0)} users")
+            else:
+                print(f"   ⚠️  Missing countries field")
+        return success
+
+    def test_admin_analytics(self):
+        """Test GET /admin/analytics - should return analytics data"""
+        if not self.token:
+            print("⚠️  Skipping analytics test - no admin token available")
+            return True
+            
+        success, response = self.run_test(
+            "Admin Analytics",
+            "GET",
+            "admin/analytics",
+            200
+        )
+        if success:
+            expected_fields = ['orders_by_day', 'top_customers', 'pack_popularity', 'conversion_rate']
+            missing_fields = [field for field in expected_fields if field not in response]
+            if missing_fields:
+                print(f"   ⚠️  Missing analytics fields: {missing_fields}")
+            else:
+                orders_by_day = response.get('orders_by_day', [])
+                top_customers = response.get('top_customers', [])
+                conversion_rate = response.get('conversion_rate', 0)
+                print(f"   Orders by day: {len(orders_by_day)} entries, Top customers: {len(top_customers)}, Conversion: {conversion_rate}%")
+        return success
+
+    def test_rate_limiting_magic_link(self):
+        """Test rate limiting on POST /auth/magic - should block after 3 requests per email"""
+        print("\n🛡️  Testing Rate Limiting on Magic Link")
+        test_email = "ratelimit2@test.com"  # Use different email to avoid previous rate limit
+        
+        # Make 4 requests rapidly to trigger rate limit (limit is 3 per email per 5 min)
+        success_count = 0
+        rate_limited = False
+        
+        for i in range(4):
+            expected_status = 200 if i < 3 else 429  # Expect 429 on 4th request
+            success, response = self.run_test(
+                f"Magic Link Rate Limit Test {i+1}/4",
+                "POST",
+                "auth/magic",
+                expected_status,
+                data={"email": test_email, "language": "en"}
+            )
+            
+            if i < 3 and success:
+                success_count += 1
+            elif i >= 3 and success:  # 429 response is considered success for rate limit test
+                rate_limited = True
+                print(f"   ✅ Rate limiting triggered as expected on request {i+1}")
+                break
+        
+        if success_count >= 3 and rate_limited:
+            print(f"   ✅ Rate limiting working correctly (3 requests per email per 5 min)")
+            return True
+        else:
+            print(f"   ⚠️  Rate limiting may not be working properly")
+            return False
 
 def main():
     print("🚀 Starting DeezLink API Tests")
@@ -230,11 +386,20 @@ def main():
         print("\n👑 Testing Admin Endpoints")
         auth_tests = [
             tester.test_auth_me_endpoint,
-            tester.test_admin_stats
+            tester.test_admin_stats,
+            tester.test_admin_security_logs,
+            tester.test_admin_blocked_list,
+            tester.test_admin_block_ip,
+            tester.test_admin_users_by_country,
+            tester.test_admin_analytics
         ]
         
         for test in auth_tests:
             test()
+            
+        # Test rate limiting (separate section)
+        print("\n🛡️  Testing Security Features")
+        tester.test_rate_limiting_magic_link()
     else:
         print("⚠️  Skipping authenticated tests - admin login failed")
 
