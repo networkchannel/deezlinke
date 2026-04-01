@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Equalizer } from "@/components/Equalizer";
 import { Disc, Users, SlidersHorizontal, Minus, Plus, Play, ShieldCheck, Sparkles } from "lucide-react";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function Offers() {
   const { t, i18n } = useTranslation();

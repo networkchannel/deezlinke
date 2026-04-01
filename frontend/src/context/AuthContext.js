@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.REACT_APP_BACKEND_URL || "";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -27,13 +27,24 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const magicLogin = async (email, language = "en") => {
+    const { data } = await axios.post(`${API}/auth/magic`, { email, language }, { withCredentials: true });
+    return data;
+  };
+
+  const verifyMagicLink = async (token) => {
+    const { data } = await axios.post(`${API}/auth/magic/verify`, { token }, { withCredentials: true });
+    setUser(data);
+    return data;
+  };
+
   const logout = async () => {
     await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
     setUser(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, magicLogin, verifyMagicLink, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );
