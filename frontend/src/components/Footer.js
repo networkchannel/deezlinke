@@ -49,7 +49,7 @@ export default function Footer() {
                   <button
                     onClick={() => setPricingOpen(true)}
                     className="hover:text-accent transition-colors text-left">
-                    {lang === "fr" ? "📊 Détails sur les prix dégressifs" : "📊 Volume pricing details"}
+                    {lang === "fr" ? "Détails sur les prix dégressifs" : "Volume pricing details"}
                   </button>
                 </li>
               </ul>
