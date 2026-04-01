@@ -279,9 +279,6 @@ export default function Landing() {
                 <h2 className="text-xl font-bold text-t-primary mb-1">
                   {lang === "fr" ? "Artistes populaires" : "Popular Artists"}
                 </h2>
-                <p className="text-sm text-t-muted">
-                  {lang === "fr" ? "Survolez pour zoomer" : "Hover to zoom"}
-                </p>
               </div>
               <ArtistCarousel artists={deezer.artists.slice(0, 12)} lang={lang} />
             </section>

@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -18,6 +19,7 @@ export default function Header() {
   const { getTotalItems, showCartNotif } = useCart();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -36,109 +38,117 @@ export default function Header() {
   const totalItems = getTotalItems();
 
   return (
-    <header className="sticky top-0 z-40 glass backdrop-blur-xl border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-        <Link to="/" className="text-t-primary font-bold text-lg tracking-tight">
-          Deez<span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">Link</span>
-        </Link>
+    <>
+      <header className="sticky top-0 z-40 glass backdrop-blur-xl border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <Link to="/" className="text-t-primary font-bold text-lg tracking-tight">
+            Deez<span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">Link</span>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className={`text-sm font-medium transition-colors ${active("/") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-            {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
-          </Link>
-          <Link to="/offers" className={`text-sm font-medium transition-colors ${active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-            {t("nav_offers")}
-          </Link>
-          {user && user.role !== "admin" && (
-            <Link to="/history" className={`text-sm font-medium transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-              {t("nav_history")}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/" className={`text-sm font-medium transition-colors ${active("/") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+              {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
             </Link>
-          )}
-          {isAdmin && user && user.role === "admin" && (
-            <Link to="/admin" className={`text-sm font-medium transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-              Admin
+            <Link to="/offers" className={`text-sm font-medium transition-colors ${active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+              {t("nav_offers")}
             </Link>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-4">
-          {/* Cart */}
-          <Link to="/cart" className="relative">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="text-t-secondary hover:text-t-primary transition-colors">
-              <ShoppingCart className="h-5 w-5" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </motion.div>
-          </Link>
-
-          {/* Cart notification */}
-          <AnimatePresence>
-            {showCartNotif && (
-              <motion.div
-                initial={{ opacity: 0, y: -20, x: 20 }}
-                animate={{ opacity: 1, y: 0, x: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="fixed top-20 right-4 glass backdrop-blur-xl px-4 py-3 rounded-xl border border-green/20 bg-green-dim">
-                <p className="text-sm text-green font-semibold flex items-center gap-2">
-                  <span className="text-lg">✓</span> {i18n.language === "fr" ? "Ajouté au panier" : "Added to cart"}
-                </p>
-              </motion.div>
+            {user && user.role !== "admin" && (
+              <Link to="/history" className={`text-sm font-medium transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+                {t("nav_history")}
+              </Link>
             )}
-          </AnimatePresence>
+            {isAdmin && user && user.role === "admin" && (
+              <Link to="/admin" className={`text-sm font-medium transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+                Admin
+              </Link>
+            )}
+          </nav>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger className="text-t-muted hover:text-t-secondary text-xs flex items-center gap-1.5 outline-none">
-              <Globe className="h-4 w-4" /> {i18n.language?.toUpperCase()}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="glass border-border min-w-[60px] backdrop-blur-xl">
-              {["fr", "en", "ar"].map((lng) => (
-                <DropdownMenuItem key={lng} onClick={() => changeLang(lng)}
-                  className={`text-xs cursor-pointer ${i18n.language === lng ? "text-accent" : "text-t-secondary"}`}>
-                  {lng.toUpperCase()}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-4">
+            {/* Cart */}
+            <button onClick={() => setCartOpen(true)} className="relative">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="text-t-secondary hover:text-t-primary transition-colors">
+                <ShoppingCart className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {totalItems}
+                  </motion.span>
+                )}
+              </motion.div>
+            </button>
 
-          {user && user.role !== "admin" ? (
-            <div className="hidden md:flex items-center gap-4">
-              <Link to="/profile" className="text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
-              <button onClick={logout} className="text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
-            </div>
-          ) : !user ? (
-            <Link to="/login" className="hidden md:block text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>
-          ) : null}
+            {/* Cart notification */}
+            <AnimatePresence>
+              {showCartNotif && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, x: 20 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="fixed top-20 right-4 glass backdrop-blur-xl px-4 py-3 rounded-xl border border-green/20 bg-green-dim z-50">
+                  <p className="text-sm text-green font-semibold flex items-center gap-2">
+                    <span className="text-lg">✓</span> {i18n.language === "fr" ? "Ajouté au panier" : "Added to cart"}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <button className="md:hidden text-t-secondary hover:text-t-primary transition-colors" onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-t-muted hover:text-t-secondary text-xs flex items-center gap-1.5 outline-none">
+                <Globe className="h-4 w-4" /> {i18n.language?.toUpperCase()}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="glass border-border min-w-[60px] backdrop-blur-xl">
+                {["fr", "en", "ar"].map((lng) => (
+                  <DropdownMenuItem key={lng} onClick={() => changeLang(lng)}
+                    className={`text-xs cursor-pointer ${i18n.language === lng ? "text-accent" : "text-t-secondary"}`}>
+                    {lng.toUpperCase()}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {user && user.role !== "admin" ? (
+              <div className="hidden md:flex items-center gap-4">
+                <Link to="/profile" className="text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
+                <button onClick={logout} className="text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
+              </div>
+            ) : !user ? (
+              <Link to="/login" className="hidden md:block text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>
+            ) : null}
+
+            <button className="md:hidden text-t-secondary hover:text-t-primary transition-colors" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border glass backdrop-blur-xl px-4 py-4 space-y-1">
-          <Link to="/" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">
-            {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
-          </Link>
-          <Link to="/offers" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">
-            {t("nav_offers")}
-          </Link>
-          {user && user.role !== "admin" && (
-            <>
-              <Link to="/history" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_history")}</Link>
-              <Link to="/profile" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }} className="block py-2.5 text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
-            </>
-          )}
-          {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>}
-        </div>
-      )}
-    </header>
+        {mobileOpen && (
+          <div className="md:hidden border-t border-border glass backdrop-blur-xl px-4 py-4 space-y-1">
+            <Link to="/" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">
+              {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
+            </Link>
+            <Link to="/offers" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">
+              {t("nav_offers")}
+            </Link>
+            {user && user.role !== "admin" && (
+              <>
+                <Link to="/history" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_history")}</Link>
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
+                <button onClick={() => { logout(); setMobileOpen(false); }} className="block py-2.5 text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
+              </>
+            )}
+            {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>}
+          </div>
+        )}
+      </header>
+
+      {/* Cart Slide Panel */}
+      <CartSlidePanel isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
   );
 }
