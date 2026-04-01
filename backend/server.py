@@ -134,7 +134,6 @@ RATE_LIMITS = {
     "login_ip": {"max": 10, "window": 300},          # 10 per 5 min per IP
     "gift_card_validate": {"max": 10, "window": 600},  # 10 per 10 min (brute force protection)
     "gift_card_purchase": {"max": 5, "window": 3600},  # 5 per hour
-}
     "order_email": {"max": 10, "window": 3600},      # 10 per hour per email
     "geo_ip": {"max": 60, "window": 60},             # 60 per min per IP
 }
