@@ -5,6 +5,7 @@ const resources = {
   en: {
     translation: {
       nav_home: "Home",
+      nav_home: "Home",
       nav_offers: "Offers",
       nav_history: "My Orders",
       nav_admin: "Admin",
@@ -152,6 +153,7 @@ const resources = {
   },
   fr: {
     translation: {
+      nav_home: "Accueil",
       nav_home: "Accueil",
       nav_offers: "Offres",
       nav_history: "Mes Commandes",
