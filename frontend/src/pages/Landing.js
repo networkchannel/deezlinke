@@ -34,33 +34,26 @@ function GlassCard({ children, className = "", glow = false }) {
 }
 
 function ArtistCarousel({ artists, lang }) {
-  const [isPaused, setIsPaused] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
+  const [duration, setDuration] = useState(50);
   
   return (
     <div 
       className="relative overflow-hidden"
-      onMouseEnter={() => {
-        setIsHovering(true);
-        setTimeout(() => setIsPaused(true), 200);
-      }}
-      onMouseLeave={() => {
-        setIsHovering(false);
-        setIsPaused(false);
-      }}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}>
+      onMouseEnter={() => setDuration(200)}
+      onMouseLeave={() => setDuration(50)}
+      onTouchStart={() => setDuration(200)}
+      onTouchEnd={() => setDuration(50)}>
       <div className="flex gap-4">
         <motion.div
           className="flex gap-4 shrink-0"
           animate={{
-            x: isPaused ? 0 : [0, -1600],
+            x: [0, -1600],
           }}
           transition={{
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: 50,
+              duration: duration,
               ease: "linear",
             },
           }}>
@@ -68,17 +61,17 @@ function ArtistCarousel({ artists, lang }) {
             <motion.div
               key={`${artist.id}-${i}`}
               className="shrink-0 w-32"
-              whileHover={{ scale: 1.015 }}
-              transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}>
-              <div className="glass rounded-xl p-3 backdrop-blur-xl transition-all duration-300">
+              whileHover={{ scale: 1.08 }}
+              transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}>
+              <div className="glass rounded-xl p-3 backdrop-blur-xl transition-all duration-300 hover:shadow-lg hover:shadow-accent-glow/20">
                 <div className="mb-2 overflow-hidden rounded-lg">
                   <motion.img
                     src={artist.picture}
                     alt={artist.name}
                     className="w-full aspect-square object-cover"
                     loading="lazy"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+                    whileHover={{ scale: 1.12 }}
+                    transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
                   />
                 </div>
                 <p className="text-xs font-semibold text-t-primary truncate">{artist.name}</p>

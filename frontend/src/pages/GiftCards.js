@@ -16,135 +16,144 @@ function EditableGiftCard3D({
   onValidate,
   loading 
 }) {
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingField, setEditingField] = useState(null);
   const lang = "fr";
 
   return (
     <motion.div
-      className="relative w-full max-w-2xl mx-auto"
+      className="relative w-full max-w-2xl mx-auto h-[520px]"
       style={{ perspective: "1500px" }}
-      whileHover={{ rotateY: isEditing ? 0 : 3, rotateX: isEditing ? 0 : -3 }}
+      whileHover={{ rotateY: 2, rotateX: -2 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
       <div 
-        className="relative bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-3xl p-10 sm:p-12 shadow-2xl shadow-accent-glow transform-gpu"
+        className="relative h-full bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-3xl p-10 sm:p-12 shadow-2xl shadow-accent-glow transform-gpu"
         style={{ transformStyle: "preserve-3d" }}>
         
         {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10 rounded-3xl overflow-hidden">
+        <div className="absolute inset-0 opacity-10 rounded-3xl overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl" />
         </div>
 
-        {/* Edit Button */}
-        {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all group z-20">
-            <Edit3 className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
-          </button>
-        )}
-
-        {isEditing && (
-          <button
-            onClick={() => setIsEditing(false)}
-            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all z-20">
-            <X className="h-5 w-5 text-white" />
-          </button>
-        )}
-
         {/* Content */}
-        <div className="relative z-10">
+        <div className="relative z-10 h-full flex flex-col">
+          {/* Header avec icônes interactives */}
           <div className="flex items-center justify-between mb-10">
-            <Gift className="h-12 w-12 text-white drop-shadow-lg" />
-            <Sparkles className="h-10 w-10 text-white/70" />
-          </div>
-
-          <div className="mb-8">
-            <p className="text-white/80 text-sm mb-3 font-medium">Carte Cadeau DeezLink</p>
-            {isEditing ? (
-              <div className="relative">
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  min="5"
-                  max="500"
-                  className="text-6xl font-bold text-white bg-white/10 border-2 border-white/30 rounded-xl px-4 py-2 w-40 tabular-nums backdrop-blur-sm focus:border-white/50 focus:outline-none"
-                />
-                <span className="text-6xl font-bold text-white ml-2">€</span>
-              </div>
-            ) : (
-              <p className="text-6xl font-bold text-white tabular-nums drop-shadow-lg">
-                {amount > 0 ? `${amount.toFixed(0)}€` : "—"}
-              </p>
-            )}
-          </div>
-
-          {isEditing ? (
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="text-white/70 text-xs mb-2 block font-medium">Pour</label>
-                <input
-                  type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder="Nom du destinataire"
-                  className="w-full bg-white/10 border-2 border-white/30 text-white rounded-xl px-4 py-3 text-lg font-semibold backdrop-blur-sm placeholder:text-white/40 focus:border-white/50 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-white/70 text-xs mb-2 block font-medium">Message</label>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Votre message personnel..."
-                  maxLength={200}
-                  rows={3}
-                  className="w-full bg-white/10 border-2 border-white/30 text-white rounded-xl px-4 py-3 text-sm backdrop-blur-sm placeholder:text-white/40 focus:border-white/50 focus:outline-none resize-none"
-                />
-                <p className="text-white/60 text-xs mt-1">{message.length}/200</p>
+            {/* Icône cadeau → Prénom */}
+            <div className="relative group">
+              <button
+                onClick={() => setEditingField(editingField === "name" ? null : "name")}
+                className="relative flex items-center gap-3 transition-all hover:scale-105">
+                <Gift className="h-12 w-12 text-white drop-shadow-lg" />
+                {editingField === "name" ? (
+                  <input
+                    type="text"
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="Prénom"
+                    autoFocus
+                    className="w-32 bg-white/20 border-2 border-white/40 text-white text-lg font-bold rounded-lg px-3 py-1.5 backdrop-blur-sm placeholder:text-white/50 focus:border-white/60 focus:outline-none"
+                  />
+                ) : (
+                  <span className="text-white text-xl font-bold drop-shadow">
+                    {recipientName || "Prénom"}
+                  </span>
+                )}
+              </button>
+              <div className="absolute -bottom-6 left-0 text-white/60 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Cliquez pour éditer
               </div>
             </div>
-          ) : (
-            <>
-              {recipientName && (
-                <div className="mb-6">
-                  <p className="text-white/60 text-xs mb-1 font-medium">Pour</p>
-                  <p className="text-white font-bold text-2xl drop-shadow">{recipientName}</p>
-                </div>
-              )}
 
-              {message && (
-                <div className="glass backdrop-blur-md rounded-xl p-4 mb-6 border border-white/20">
-                  <p className="text-white/90 text-sm italic leading-relaxed">"{message}"</p>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="mt-8 pt-6 border-t border-white/30 flex items-center justify-between">
-            <p className="text-white/70 text-xs font-medium">Valable 12 mois • Deezer Premium</p>
-            {isEditing && (
+            {/* Icône étoile → Montant */}
+            <div className="relative group">
               <button
-                onClick={() => {
-                  setIsEditing(false);
-                  onValidate();
-                }}
-                disabled={loading}
-                className="px-6 py-2.5 bg-white text-accent font-bold rounded-xl hover:bg-white/90 transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg">
+                onClick={() => setEditingField(editingField === "amount" ? null : "amount")}
+                className="relative flex items-center gap-3 transition-all hover:scale-105">
+                <Sparkles className="h-10 w-10 text-white/90 drop-shadow-lg" />
+                {editingField === "amount" ? (
+                  <div className="flex items-baseline gap-1">
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(Number(e.target.value))}
+                      min="5"
+                      max="500"
+                      autoFocus
+                      className="w-24 bg-white/20 border-2 border-white/40 text-white text-4xl font-bold rounded-lg px-2 py-1 tabular-nums backdrop-blur-sm focus:border-white/60 focus:outline-none text-right"
+                    />
+                    <span className="text-4xl font-bold text-white">€</span>
+                  </div>
+                ) : (
+                  <span className="text-5xl font-bold text-white tabular-nums drop-shadow-lg">
+                    {amount > 0 ? `${amount}€` : "—€"}
+                  </span>
+                )}
+              </button>
+              <div className="absolute -bottom-6 right-0 text-white/60 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                Cliquez pour éditer
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col">
+            <p className="text-white/80 text-sm mb-6 font-medium">Carte Cadeau DeezLink</p>
+
+            {/* Zone Message */}
+            <div className="flex-1 mb-6">
+              {editingField === "message" ? (
+                <div>
+                  <label className="text-white/70 text-xs mb-2 block font-medium">Message personnel</label>
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Écrivez un message..."
+                    maxLength={200}
+                    rows={4}
+                    autoFocus
+                    className="w-full bg-white/20 border-2 border-white/40 text-white rounded-xl px-4 py-3 text-sm backdrop-blur-sm placeholder:text-white/50 focus:border-white/60 focus:outline-none resize-none"
+                  />
+                  <p className="text-white/60 text-xs mt-1">{message.length}/200</p>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setEditingField("message")}
+                  className="w-full h-full min-h-[100px] glass backdrop-blur-md rounded-xl p-4 border border-white/20 hover:border-white/40 transition-all text-left group">
+                  {message ? (
+                    <p className="text-white/90 text-sm italic leading-relaxed">"{message}"</p>
+                  ) : (
+                    <p className="text-white/40 text-sm italic">Cliquez pour ajouter un message...</p>
+                  )}
+                  <div className="text-white/50 text-[10px] mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Cliquez pour éditer le message
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-6 border-t border-white/30 space-y-3">
+              <p className="text-white/70 text-xs font-medium">Valable 12 mois • Deezer Premium</p>
+              
+              <motion.button
+                onClick={onValidate}
+                disabled={loading || !amount || amount < 5}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-6 py-3.5 bg-white text-accent font-bold rounded-xl hover:bg-white/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg">
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    {lang === "fr" ? "Création..." : "Creating..."}
+                    <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    Création...
                   </>
                 ) : (
                   <>
                     <Check className="h-5 w-5" />
-                    {lang === "fr" ? "Valider" : "Validate"}
+                    Valider la carte cadeau
                   </>
                 )}
-              </button>
-            )}
+              </motion.button>
+            </div>
           </div>
         </div>
 
