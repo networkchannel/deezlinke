@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import axios from "axios";
 import { Slider } from "@/components/ui/slider";
-import { ArrowRight, ChevronDown, ChevronUp, Zap, Shield, Clock, Check } from "lucide-react";
+import { ArrowRight, ChevronDown, Zap, Shield, Clock, Sparkles } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,43 +17,29 @@ const TIERS = [
   { min: 500, max: null, price: "1,50" },
 ];
 
-/* Scroll-reveal wrapper — fades in + slides up when entering viewport */
 function Reveal({ children, className = "", delay = 0 }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, margin: "-40px" });
   return (
-    <motion.div ref={ref}
-      initial={{ opacity: 0, y: 24 }}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}>
       {children}
     </motion.div>
   );
 }
 
-/* Interactive card — lifts on hover */
-function Card({ children, className = "", highlighted = false, onClick }) {
+function GlassCard({ children, className = "", glow = false }) {
   return (
     <motion.div
-      whileHover={{ y: -3, transition: { duration: 0.2 } }}
-      onClick={onClick}
-      className={`bg-surface border rounded-xl transition-colors duration-200 ${highlighted ? "border-accent/40 hover:border-accent/60" : "border-border hover:border-border-hover"} ${onClick ? "cursor-pointer" : ""} ${className}`}>
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className={`glass glass-hover rounded-2xl ${glow ? "shadow-lg shadow-accent-glow" : ""} ${className}`}>
       {children}
     </motion.div>
-  );
-}
-
-/* CTA button with micro-interaction */
-function CTA({ children, onClick, className = "", full = false }) {
-  return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors ${full ? "w-full" : ""} ${className}`}>
-      {children}
-    </motion.button>
   );
 }
 
@@ -90,306 +76,444 @@ export default function Landing() {
   ];
 
   const ordersDelivered = stats?.orders || 0;
-
   const scrollToPacks = () => document.getElementById("packs")?.scrollIntoView({ behavior: "smooth" });
 
   return (
-    <div className="max-w-6xl mx-auto px-5 md:px-8">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Floating orbs */}
+      <div className="orb-purple" style={{ top: "-10%", right: "-10%" }} />
+      <div className="orb-pink" style={{ bottom: "10%", left: "-5%" }} />
 
-      {/* ═══════════════ HERO ═══════════════ */}
-      <section className="pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-5 gap-10 md:gap-14 items-start">
-        {/* Left — 3 cols */}
-        <div className="md:col-span-3 pt-2">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+        {/* ═══ HERO SECTION ═══ */}
+        <section className="mb-12 sm:mb-16">
           <Reveal>
-            <p className="text-accent text-[13px] font-medium tracking-wide mb-4">Deezer Premium</p>
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="text-accent text-xs font-semibold tracking-wide uppercase">
+                Deezer Premium
+              </span>
+            </div>
           </Reveal>
-          <Reveal delay={0.05}>
-            <h1 className="text-t-primary font-semibold text-[clamp(2.2rem,5vw,3.4rem)] leading-[1.08] tracking-tight mb-5">
+
+          <Reveal delay={0.1}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1]">
               {lang === "fr" ? (
-                <>Liens d'activation<br />à partir de <span className="text-green">1,50€</span></>
+                <>
+                  Musique illimitée<br />
+                  à partir de{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
+                    1,50€
+                  </span>
+                </>
               ) : lang === "ar" ? (
-                <>روابط التفعيل<br />ابتداءً من <span className="text-green">1,50€</span></>
+                <>
+                  موسيقى بلا حدود<br />
+                  ابتداءً من{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
+                    1,50€
+                  </span>
+                </>
               ) : (
-                <>Activation links<br />starting at <span className="text-green">1,50€</span></>
+                <>
+                  Unlimited music<br />
+                  starting at{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
+                    1,50€
+                  </span>
+                </>
               )}
             </h1>
           </Reveal>
-          <Reveal delay={0.1}>
-            <p className="text-t-secondary text-[15px] leading-relaxed mb-8 max-w-lg">
+
+          <Reveal delay={0.2}>
+            <p className="text-base sm:text-lg text-t-secondary max-w-2xl mb-8 leading-relaxed">
               {lang === "fr"
-                ? "Achetez des liens d'activation Deezer Premium à prix dégressif. Livraison instantanée par email. Paiement crypto accepté — BTC, ETH, USDT, LTC."
+                ? "Accédez à Deezer Premium avec nos liens d'activation à prix dégressifs. Livraison instantanée • Paiement crypto sécurisé • Garantie 30 jours."
                 : lang === "ar"
-                ? "اشترِ روابط تفعيل Deezer Premium بأسعار تنازلية. توصيل فوري عبر البريد. الدفع بالعملات الرقمية."
-                : "Buy Deezer Premium activation links at volume discounts. Instant email delivery. Crypto payment accepted — BTC, ETH, USDT, LTC."}
+                ? "احصل على Deezer Premium بروابط التفعيل بأسعار تنازلية. توصيل فوري • دفع آمن بالعملات الرقمية."
+                : "Access Deezer Premium with our volume-priced activation links. Instant delivery • Secure crypto payment • 30-day guarantee."}
             </p>
           </Reveal>
-          <Reveal delay={0.15}>
+
+          <Reveal delay={0.3}>
             <div className="flex flex-wrap items-center gap-4 mb-8">
-              <CTA onClick={scrollToPacks} className="text-[14px] px-7 py-3.5">
-                {t("hero_cta")} <ArrowRight className="h-4 w-4" />
-              </CTA>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={scrollToPacks}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow">
+                {t("hero_cta")}
+                <ArrowRight className="h-5 w-5" />
+              </motion.button>
               {ordersDelivered > 0 && (
-                <span className="text-t-muted text-[13px]">
-                  {ordersDelivered.toLocaleString()} {lang === "fr" ? "commandes livrées" : "orders delivered"}
-                </span>
+                <div className="flex items-center gap-2 text-sm text-t-muted">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                  <span>
+                    {ordersDelivered.toLocaleString()}{" "}
+                    {lang === "fr" ? "commandes livrées" : "orders delivered"}
+                  </span>
+                </div>
               )}
             </div>
           </Reveal>
-          <Reveal delay={0.2}>
+
+          <Reveal delay={0.4}>
             <div className="flex flex-wrap gap-3">
               {[
                 { icon: Zap, text: lang === "fr" ? "Livraison instantanée" : "Instant delivery" },
                 { icon: Shield, text: lang === "fr" ? "Paiement sécurisé" : "Secure payment" },
                 { icon: Clock, text: lang === "fr" ? "Garanti 30 jours" : "30-day guarantee" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3.5 py-2 text-[12px] text-t-secondary">
-                  <item.icon className="h-3.5 w-3.5 text-t-muted" /> {item.text}
+                <div
+                  key={i}
+                  className="flex items-center gap-2 glass rounded-lg px-4 py-2.5 text-sm text-t-secondary backdrop-blur-md">
+                  <item.icon className="h-4 w-4 text-accent" />
+                  {item.text}
                 </div>
               ))}
             </div>
           </Reveal>
-        </div>
+        </section>
 
-        {/* Right — 2 cols : pricing table */}
-        <Reveal delay={0.1} className="md:col-span-2">
-          <Card className="overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
-              <span className="text-[13px] text-t-primary font-medium">
-                {lang === "fr" ? "Grille tarifaire" : lang === "ar" ? "جدول الأسعار" : "Volume pricing"}
-              </span>
-              <span className="text-accent text-[11px] font-medium bg-accent-dim px-2 py-0.5 rounded">
-                {lang === "fr" ? "Jusqu'à -70%" : "Up to -70%"}
-              </span>
-            </div>
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-border text-t-muted">
-                  <th className="text-left font-normal px-5 py-2.5">{lang === "fr" ? "Quantité" : "Qty"}</th>
-                  <th className="text-right font-normal px-5 py-2.5">{lang === "fr" ? "Prix / lien" : "Price / link"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TIERS.map((tier, i) => {
-                  const isLast = i === TIERS.length - 1;
-                  return (
-                    <tr key={i} className={`border-b border-border last:border-0 ${isLast ? "bg-green-dim" : "hover:bg-surface-2"} transition-colors`}>
-                      <td className="px-5 py-3 text-t-secondary">
-                        {tier.max ? `${tier.min} – ${tier.max}` : `${tier.min}+`}
-                      </td>
-                      <td className={`px-5 py-3 text-right tabular-nums font-medium ${isLast ? "text-green" : "text-t-primary"}`}>
-                        {tier.price}€
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Card>
-        </Reveal>
-      </section>
-
-      {/* ═══════════════ ARTISTS BAR ═══════════════ */}
-      {deezer.artists?.length > 0 && (
-        <Reveal>
-          <section className="pb-16 md:pb-20">
-            <p className="text-t-muted text-[11px] uppercase tracking-widest mb-4">
-              {lang === "fr" ? "Disponible sur Deezer Premium" : "Available on Deezer Premium"}
-            </p>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-              {deezer.artists.slice(0, 10).map((artist) => (
-                <div key={artist.id} className="flex items-center gap-2.5 bg-surface border border-border rounded-lg px-3 py-2 shrink-0 hover:border-border-hover transition-colors">
-                  <img src={artist.picture} alt={artist.name} className="w-7 h-7 rounded-full object-cover" loading="lazy" />
-                  <span className="text-[12px] text-t-secondary whitespace-nowrap">{artist.name}</span>
+        {/* ═══ TRENDING ARTISTS MARQUEE ═══ */}
+        {deezer.artists?.length > 0 && (
+          <Reveal>
+            <section className="mb-12 sm:mb-16 overflow-hidden">
+              <p className="text-xs text-t-muted uppercase tracking-widest mb-4">
+                {lang === "fr" ? "Tendances sur Deezer" : "Trending on Deezer"}
+              </p>
+              <div className="relative flex overflow-hidden">
+                <div className="flex gap-4 animate-marquee whitespace-nowrap">
+                  {[...deezer.artists, ...deezer.artists, ...deezer.artists].map((artist, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 glass rounded-xl px-4 py-3 backdrop-blur-md shrink-0">
+                      <img
+                        src={artist.picture}
+                        alt={artist.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                        loading="lazy"
+                      />
+                      <span className="text-sm text-t-primary font-medium whitespace-nowrap">
+                        {artist.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
+                <div className="flex gap-4 animate-marquee whitespace-nowrap" aria-hidden="true">
+                  {[...deezer.artists, ...deezer.artists, ...deezer.artists].map((artist, i) => (
+                    <div
+                      key={`duplicate-${i}`}
+                      className="flex items-center gap-3 glass rounded-xl px-4 py-3 backdrop-blur-md shrink-0">
+                      <img
+                        src={artist.picture}
+                        alt={artist.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                        loading="lazy"
+                      />
+                      <span className="text-sm text-t-primary font-medium whitespace-nowrap">
+                        {artist.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ═══ BENTO GRID - PACKS ═══ */}
+        <section id="packs" className="mb-12 sm:mb-16">
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+              {lang === "fr" ? "Nos offres" : lang === "ar" ? "عروضنا" : "Our offers"}
+            </h2>
+            <p className="text-sm text-t-muted mb-8">
+              {lang === "fr"
+                ? "Tarifs dégressifs — Plus vous achetez, moins vous payez par lien."
+                : "Volume pricing — The more you buy, the less you pay per link."}
+            </p>
+          </Reveal>
+
+          {/* Bento Grid Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {packs
+              .filter((p) => p.id !== "custom")
+              .map((pack, i) => {
+                const name = t(pack.name_key);
+                const hasDiscount = pack.discount > 0;
+                const isPopular = pack.highlighted;
+                return (
+                  <Reveal key={pack.id} delay={i * 0.05}>
+                    <GlassCard glow={isPopular} className="p-6 relative overflow-hidden h-full flex flex-col">
+                      {isPopular && (
+                        <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
+                          {lang === "fr" ? "POPULAIRE" : "POPULAR"}
+                        </div>
+                      )}
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-t-primary mb-1">{name}</h3>
+                        <p className="text-xs text-t-muted">
+                          {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : (pack.quantity > 1 ? "links" : "link")} • Deezer Premium
+                        </p>
+                      </div>
+
+                      {hasDiscount && (
+                        <div className="mb-3 inline-flex items-center gap-2">
+                          <span className="text-xs text-green font-semibold bg-green-dim px-2 py-1 rounded">
+                            -{pack.discount}%
+                          </span>
+                          <span className="text-xs text-t-muted line-through">
+                            {(pack.price / (1 - pack.discount / 100)).toFixed(0)}€
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="mt-auto pt-4 flex items-end justify-between">
+                        <div>
+                          <span className="text-3xl font-bold text-t-primary tabular-nums">
+                            {pack.price.toFixed(0)}€
+                          </span>
+                          <p className="text-xs text-t-muted mt-1">
+                            {pack.unit_price.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}
+                          </p>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => navigate(`/checkout/${pack.id}`)}
+                          className="inline-flex items-center gap-2 px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl transition-all">
+                          {lang === "fr" ? "Acheter" : "Buy"}
+                          <ArrowRight className="h-4 w-4" />
+                        </motion.button>
+                      </div>
+                    </GlassCard>
+                  </Reveal>
+                );
+              })}
+
+            {/* Custom Pack */}
+            <Reveal delay={0.15}>
+              <GlassCard className="p-6 h-full flex flex-col sm:col-span-2 lg:col-span-1">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-t-primary mb-1">
+                    {lang === "fr" ? "Sur mesure" : "Custom"}
+                  </h3>
+                  <p className="text-xs text-t-muted">
+                    {lang === "fr" ? "Choisis la quantité exacte" : "Pick your exact quantity"}
+                  </p>
+                </div>
+
+                <div className="mb-5">
+                  <div className="flex items-baseline justify-between mb-3">
+                    <span className="text-sm text-t-muted">{lang === "fr" ? "Liens" : "Links"}</span>
+                    <span className="text-2xl font-bold text-accent tabular-nums">{customQty}</span>
+                  </div>
+                  <Slider
+                    value={[customQty]}
+                    min={1}
+                    max={1000}
+                    step={1}
+                    onValueChange={([v]) => setCustomQty(v)}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-t-muted tabular-nums">
+                    <span>1</span>
+                    <span>1000</span>
+                  </div>
+                </div>
+
+                {pricing && (
+                  <div className="flex items-center justify-between text-xs mb-3">
+                    <span className="text-t-muted">
+                      {pricing.unit_price?.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}
+                    </span>
+                    {pricing.savings > 0 && (
+                      <span className="text-green font-semibold">
+                        -{pricing.savings?.toFixed(0)}€ {lang === "fr" ? "économie" : "saved"}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-auto pt-4 flex items-end justify-between">
+                  <span className="text-3xl font-bold text-t-primary tabular-nums">
+                    {pricing ? `${pricing.total?.toFixed(0)}€` : "—"}
+                  </span>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(`/checkout/custom?qty=${customQty}`)}
+                    className="inline-flex items-center gap-2 px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl transition-all">
+                    {lang === "fr" ? "Acheter" : "Buy"}
+                    <ArrowRight className="h-4 w-4" />
+                  </motion.button>
+                </div>
+              </GlassCard>
+            </Reveal>
+          </div>
+
+          {/* Pricing Grid */}
+          <Reveal delay={0.2}>
+            <GlassCard className="overflow-hidden">
+              <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+                <span className="text-sm text-t-primary font-semibold">
+                  {lang === "fr" ? "Grille tarifaire" : "Volume pricing"}
+                </span>
+                <span className="text-xs text-accent font-semibold bg-accent-glow px-2 py-1 rounded">
+                  {lang === "fr" ? "Jusqu'à -70%" : "Up to -70%"}
+                </span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-t-muted">
+                    <th className="text-left font-normal px-5 py-3">
+                      {lang === "fr" ? "Quantité" : "Quantity"}
+                    </th>
+                    <th className="text-right font-normal px-5 py-3">
+                      {lang === "fr" ? "Prix / lien" : "Price / link"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TIERS.map((tier, i) => {
+                    const isLast = i === TIERS.length - 1;
+                    return (
+                      <tr
+                        key={i}
+                        className={`border-b border-border last:border-0 ${
+                          isLast ? "bg-green-dim" : "hover:bg-surface-hover"
+                        } transition-colors`}>
+                        <td className="px-5 py-3 text-t-secondary">
+                          {tier.max ? `${tier.min} – ${tier.max}` : `${tier.min}+`}
+                        </td>
+                        <td
+                          className={`px-5 py-3 text-right tabular-nums font-semibold ${
+                            isLast ? "text-green" : "text-t-primary"
+                          }`}>
+                          {tier.price}€
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </GlassCard>
+          </Reveal>
+        </section>
+
+        {/* ═══ HOW IT WORKS ═══ */}
+        <section className="mb-12 sm:mb-16">
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-8">{t("how_title")}</h2>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              { num: "01", title: t("how_step1_title"), desc: t("how_step1_desc") },
+              { num: "02", title: t("how_step2_title"), desc: t("how_step2_desc") },
+              { num: "03", title: t("how_step3_title"), desc: t("how_step3_desc") },
+            ].map((step, i) => (
+              <Reveal key={i} delay={i * 0.1}>
+                <GlassCard className="p-6 relative overflow-hidden">
+                  <div className="absolute -top-6 -right-6 text-[120px] font-bold text-white opacity-[0.03] leading-none select-none">
+                    {step.num}
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-xs font-bold text-accent bg-accent-glow w-8 h-8 rounded-lg flex items-center justify-center">
+                        {step.num}
+                      </span>
+                      <h3 className="text-base font-semibold text-t-primary">{step.title}</h3>
+                    </div>
+                    <p className="text-sm text-t-secondary leading-relaxed">{step.desc}</p>
+                  </div>
+                </GlassCard>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ STATS ═══ */}
+        <Reveal>
+          <section className="mb-12 sm:mb-16">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                {
+                  value: ordersDelivered > 0 ? ordersDelivered.toLocaleString() : "500+",
+                  label: lang === "fr" ? "Commandes" : "Orders",
+                },
+                {
+                  value: stats?.links > 0 ? stats.links.toLocaleString() : "2,000+",
+                  label: lang === "fr" ? "Liens livrés" : "Links delivered",
+                },
+                { value: "< 1min", label: lang === "fr" ? "Livraison" : "Delivery" },
+                { value: "30j", label: lang === "fr" ? "Garantie" : "Guarantee" },
+              ].map((stat, i) => (
+                <GlassCard key={i} className="p-5 text-center">
+                  <p className="text-2xl font-bold text-t-primary tabular-nums mb-1">{stat.value}</p>
+                  <p className="text-xs text-t-muted uppercase tracking-wide">{stat.label}</p>
+                </GlassCard>
               ))}
             </div>
           </section>
         </Reveal>
-      )}
 
-      {/* ═══════════════ PACKS ═══════════════ */}
-      <section id="packs" className="pb-16 md:pb-24">
-        <Reveal>
-          <h2 className="text-t-primary font-semibold text-[22px] mb-2">
-            {lang === "fr" ? "Choisir un pack" : lang === "ar" ? "اختر باقة" : "Choose a pack"}
-          </h2>
-          <p className="text-t-muted text-[13px] mb-8">
-            {lang === "fr" ? "Plus vous achetez, moins vous payez par lien." : "The more you buy, the less you pay per link."}
-          </p>
-        </Reveal>
-
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          {packs.filter(p => p.id !== "custom").map((pack, i) => {
-            const name = t(pack.name_key);
-            const hasDiscount = pack.discount > 0;
-            return (
-              <Reveal key={pack.id} delay={i * 0.08}>
-                <Card highlighted={pack.highlighted} className="p-5 flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-t-primary font-medium text-[15px]">{name}</p>
-                      <p className="text-t-muted text-[12px] mt-0.5">
-                        {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : (pack.quantity > 1 ? "links" : "link")} · Deezer Premium
-                      </p>
-                    </div>
-                    {hasDiscount && (
-                      <span className="text-green text-[11px] font-medium bg-green-dim px-2 py-0.5 rounded">-{pack.discount}%</span>
-                    )}
-                  </div>
-
-                  {hasDiscount && (
-                    <p className="text-t-muted text-[12px] mb-2">{pack.unit_price.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}</p>
-                  )}
-
-                  <div className="mt-auto pt-4 flex items-end justify-between">
-                    <span className="text-t-primary font-semibold text-[28px] tabular-nums leading-none">{pack.price.toFixed(0)}€</span>
-                    <CTA onClick={() => navigate(`/checkout/${pack.id}`)} className="text-[13px] px-5 py-2.5">
-                      {lang === "fr" ? "Acheter" : "Buy"} <ArrowRight className="h-3.5 w-3.5" />
-                    </CTA>
-                  </div>
-                </Card>
-              </Reveal>
-            );
-          })}
-
-          {/* Custom */}
-          <Reveal delay={0.16}>
-            <Card className="p-5 flex flex-col h-full">
-              <div className="mb-3">
-                <p className="text-t-primary font-medium text-[15px]">{lang === "fr" ? "Sur mesure" : "Custom"}</p>
-                <p className="text-t-muted text-[12px] mt-0.5">{lang === "fr" ? "Choisis la quantité exacte" : "Pick your exact quantity"}</p>
-              </div>
-
-              <div className="my-4">
-                <div className="flex items-baseline justify-between mb-3">
-                  <span className="text-t-muted text-[12px]">{lang === "fr" ? "Liens" : "Links"}</span>
-                  <span className="text-accent font-semibold text-[22px] tabular-nums">{customQty}</span>
-                </div>
-                <Slider value={[customQty]} min={1} max={1000} step={1} onValueChange={([v]) => setCustomQty(v)} />
-                <div className="flex justify-between text-[10px] text-t-muted mt-1.5 tabular-nums"><span>1</span><span>1000</span></div>
-              </div>
-
-              {pricing && (
-                <div className="flex items-center justify-between text-[12px] mb-2">
-                  <span className="text-t-muted">{pricing.unit_price?.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}</span>
-                  {pricing.savings > 0 && <span className="text-green font-medium">-{pricing.savings?.toFixed(0)}€ {lang === "fr" ? "d'économie" : "saved"}</span>}
-                </div>
-              )}
-
-              <div className="mt-auto pt-4 flex items-end justify-between">
-                <span className="text-t-primary font-semibold text-[28px] tabular-nums leading-none">
-                  {pricing ? `${pricing.total?.toFixed(0)}€` : "—"}
-                </span>
-                <CTA onClick={() => navigate(`/checkout/custom?qty=${customQty}`)} className="text-[13px] px-5 py-2.5">
-                  {lang === "fr" ? "Acheter" : "Buy"} <ArrowRight className="h-3.5 w-3.5" />
-                </CTA>
-              </div>
-            </Card>
+        {/* ═══ FAQ ═══ */}
+        <section className="mb-12 sm:mb-16">
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6">FAQ</h2>
           </Reveal>
-        </div>
-
-        {/* Crypto payment note */}
-        <Reveal delay={0.2}>
-          <div className="flex flex-wrap items-center justify-between bg-surface border border-border rounded-xl px-5 py-4">
-            <div className="flex items-center gap-3 text-[13px] text-t-secondary">
-              <Shield className="h-4 w-4 text-t-muted shrink-0" />
-              {lang === "fr" ? "Paiement sécurisé via" : "Secure payment via"} <span className="text-t-primary font-medium">OxaPay</span>
-            </div>
-            <div className="flex items-center gap-3 text-[12px] text-t-muted font-mono">
-              <span>BTC</span><span>ETH</span><span>USDT</span><span>LTC</span>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-      <section className="pb-16 md:pb-24">
-        <Reveal>
-          <h2 className="text-t-primary font-semibold text-[22px] mb-8">{t("how_title")}</h2>
-        </Reveal>
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            { num: "01", title: t("how_step1_title"), desc: t("how_step1_desc"), icon: Check },
-            { num: "02", title: t("how_step2_title"), desc: t("how_step2_desc"), icon: Shield },
-            { num: "03", title: t("how_step3_title"), desc: t("how_step3_desc"), icon: Zap },
-          ].map((step, i) => (
-            <Reveal key={i} delay={i * 0.08}>
-              <Card className="p-5 h-full">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-accent text-[11px] font-medium bg-accent-dim w-8 h-8 rounded-lg flex items-center justify-center">{step.num}</span>
-                  <p className="text-t-primary font-medium text-[14px]">{step.title}</p>
-                </div>
-                <p className="text-t-secondary text-[13px] leading-relaxed">{step.desc}</p>
-              </Card>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════ SOCIAL PROOF ═══════════════ */}
-      <Reveal>
-        <section className="pb-16 md:pb-24">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { value: ordersDelivered > 0 ? ordersDelivered.toLocaleString() : "500+", label: lang === "fr" ? "Commandes" : "Orders" },
-              { value: stats?.links > 0 ? stats.links.toLocaleString() : "2,000+", label: lang === "fr" ? "Liens livrés" : "Links delivered" },
-              { value: "< 1min", label: lang === "fr" ? "Temps de livraison" : "Delivery time" },
-              { value: "30j", label: lang === "fr" ? "Garantie" : "Guarantee" },
-            ].map((stat, i) => (
-              <Card key={i} className="p-5 text-center">
-                <p className="text-t-primary font-semibold text-[22px] tabular-nums">{stat.value}</p>
-                <p className="text-t-muted text-[11px] mt-1">{stat.label}</p>
-              </Card>
-            ))}
-          </div>
-        </section>
-      </Reveal>
-
-      {/* ═══════════════ FAQ ═══════════════ */}
-      <section className="pb-16 md:pb-24">
-        <Reveal>
-          <h2 className="text-t-primary font-semibold text-[22px] mb-6">FAQ</h2>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <div className="bg-surface border border-border rounded-xl divide-y divide-border overflow-hidden">
-            {faqs.map((faq, i) => (
-              <div key={i}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-2 transition-colors">
-                  <span className="text-t-primary text-[14px] font-medium pr-4">{faq.q}</span>
-                  <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown className="h-4 w-4 text-t-muted shrink-0" />
+          <Reveal delay={0.05}>
+            <GlassCard className="divide-y divide-border overflow-hidden">
+              {faqs.map((faq, i) => (
+                <div key={i}>
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-surface-hover transition-colors">
+                    <span className="text-sm font-medium text-t-primary pr-4">{faq.q}</span>
+                    <motion.div
+                      animate={{ rotate: openFaq === i ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}>
+                      <ChevronDown className="h-5 w-5 text-t-muted shrink-0" />
+                    </motion.div>
+                  </button>
+                  <motion.div
+                    initial={false}
+                    animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden">
+                    <div className="px-6 pb-5">
+                      <p className="text-sm text-t-secondary leading-relaxed">{faq.a}</p>
+                    </div>
                   </motion.div>
-                </button>
-                <motion.div
-                  initial={false}
-                  animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden">
-                  <div className="px-5 pb-4">
-                    <p className="text-t-secondary text-[13px] leading-relaxed">{faq.a}</p>
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ═══════════════ BOTTOM CTA ═══════════════ */}
-      <Reveal>
-        <section className="pb-16 md:pb-20">
-          <div className="bg-surface border border-border rounded-xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-t-primary font-semibold text-[18px] mb-1">{t("cta_title")}</h3>
-              <p className="text-t-secondary text-[13px]">{t("cta_subtitle")}</p>
-            </div>
-            <CTA onClick={scrollToPacks} className="text-[14px] px-7 py-3.5 shrink-0">
-              {t("hero_cta")} <ArrowRight className="h-4 w-4" />
-            </CTA>
-          </div>
+                </div>
+              ))}
+            </GlassCard>
+          </Reveal>
         </section>
-      </Reveal>
+
+        {/* ═══ FINAL CTA ═══ */}
+        <Reveal>
+          <section className="mb-12">
+            <GlassCard className="p-8 sm:p-10 text-center sm:text-left sm:flex items-center justify-between gap-6">
+              <div>
+                <h3 className="text-xl font-bold text-t-primary mb-2">{t("cta_title")}</h3>
+                <p className="text-sm text-t-secondary">{t("cta_subtitle")}</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={scrollToPacks}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow shrink-0 mt-6 sm:mt-0">
+                {t("hero_cta")}
+                <ArrowRight className="h-5 w-5" />
+              </motion.button>
+            </GlassCard>
+          </section>
+        </Reveal>
+      </div>
     </div>
   );
 }

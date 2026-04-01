@@ -32,37 +32,37 @@ export default function Header() {
   const active = (p) => location.pathname === p;
 
   return (
-    <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur-sm border-b border-border">
-      <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-14">
-        <Link to="/" className="text-t-primary font-semibold text-[15px] tracking-tight">
-          Deez<span className="text-accent">Link</span>
+    <header className="sticky top-0 z-40 glass backdrop-blur-xl border-b border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+        <Link to="/" className="text-t-primary font-bold text-lg tracking-tight">
+          Deez<span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">Link</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link to="/" className={`text-[13px] transition-colors ${active("/") || active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+        <nav className="hidden md:flex items-center gap-8">
+          <Link to="/" className={`text-sm font-medium transition-colors ${active("/") || active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
             {t("nav_offers")}
           </Link>
           {user && user.role !== "admin" && (
-            <Link to="/history" className={`text-[13px] transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            <Link to="/history" className={`text-sm font-medium transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
               {t("nav_history")}
             </Link>
           )}
           {isAdmin && user && user.role === "admin" && (
-            <Link to="/admin" className={`text-[13px] transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            <Link to="/admin" className={`text-sm font-medium transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
               Admin
             </Link>
           )}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <DropdownMenu>
-            <DropdownMenuTrigger className="text-t-muted hover:text-t-secondary text-[12px] flex items-center gap-1 outline-none">
-              <Globe className="h-3.5 w-3.5" /> {i18n.language?.toUpperCase()}
+            <DropdownMenuTrigger className="text-t-muted hover:text-t-secondary text-xs flex items-center gap-1.5 outline-none">
+              <Globe className="h-4 w-4" /> {i18n.language?.toUpperCase()}
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-surface border-border min-w-[60px]">
+            <DropdownMenuContent className="glass border-border min-w-[60px] backdrop-blur-xl">
               {["fr", "en", "ar"].map((lng) => (
                 <DropdownMenuItem key={lng} onClick={() => changeLang(lng)}
-                  className={`text-[12px] cursor-pointer ${i18n.language === lng ? "text-accent" : "text-t-secondary"}`}>
+                  className={`text-xs cursor-pointer ${i18n.language === lng ? "text-accent" : "text-t-secondary"}`}>
                   {lng.toUpperCase()}
                 </DropdownMenuItem>
               ))}
@@ -70,31 +70,31 @@ export default function Header() {
           </DropdownMenu>
 
           {user && user.role !== "admin" ? (
-            <div className="hidden md:flex items-center gap-3">
-              <Link to="/profile" className="text-[13px] text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
-              <button onClick={logout} className="text-[13px] text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/profile" className="text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
+              <button onClick={logout} className="text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
             </div>
           ) : !user ? (
-            <Link to="/login" className="hidden md:block text-[13px] text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>
+            <Link to="/login" className="hidden md:block text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>
           ) : null}
 
-          <button className="md:hidden text-t-secondary" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="md:hidden text-t-secondary hover:text-t-primary transition-colors" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-surface px-5 py-3 space-y-1">
-          <Link to="/" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_offers")}</Link>
+        <div className="md:hidden border-t border-border glass backdrop-blur-xl px-4 py-4 space-y-1">
+          <Link to="/" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_offers")}</Link>
           {user && user.role !== "admin" && (
             <>
-              <Link to="/history" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_history")}</Link>
-              <Link to="/profile" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_profile")}</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }} className="block py-2 text-[13px] text-t-muted">{t("nav_logout")}</button>
+              <Link to="/history" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_history")}</Link>
+              <Link to="/profile" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
+              <button onClick={() => { logout(); setMobileOpen(false); }} className="block py-2.5 text-sm text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
             </>
           )}
-          {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_login")}</Link>}
+          {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>}
         </div>
       )}
     </header>
