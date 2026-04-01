@@ -35,12 +35,19 @@ function GlassCard({ children, className = "", glow = false }) {
 
 function ArtistCarousel({ artists, lang }) {
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   
   return (
     <div 
       className="relative overflow-hidden"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => {
+        setIsHovering(true);
+        setTimeout(() => setIsPaused(true), 200);
+      }}
+      onMouseLeave={() => {
+        setIsHovering(false);
+        setIsPaused(false);
+      }}
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}>
       <div className="flex gap-4">
@@ -53,7 +60,7 @@ function ArtistCarousel({ artists, lang }) {
             x: {
               repeat: Infinity,
               repeatType: "loop",
-              duration: 40,
+              duration: 50,
               ease: "linear",
             },
           }}>
@@ -61,17 +68,17 @@ function ArtistCarousel({ artists, lang }) {
             <motion.div
               key={`${artist.id}-${i}`}
               className="shrink-0 w-32"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-              <div className="glass rounded-xl p-3 backdrop-blur-xl">
+              whileHover={{ scale: 1.015 }}
+              transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}>
+              <div className="glass rounded-xl p-3 backdrop-blur-xl transition-all duration-300">
                 <div className="mb-2 overflow-hidden rounded-lg">
                   <motion.img
                     src={artist.picture}
                     alt={artist.name}
                     className="w-full aspect-square object-cover"
                     loading="lazy"
-                    whileHover={{ scale: 1.08 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
                   />
                 </div>
                 <p className="text-xs font-semibold text-t-primary truncate">{artist.name}</p>

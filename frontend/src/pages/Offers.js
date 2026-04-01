@@ -31,6 +31,7 @@ function GlassCard({ children, className = "", glow = false }) {
 export default function Offers() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const lang = i18n.language || "fr";
   const [packs, setPacks] = useState([]);
   const [customQty, setCustomQty] = useState(25);
@@ -75,7 +76,104 @@ export default function Offers() {
         </div>
 
         {/* Main Packs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {/* Mobile: Horizontal Scroll */}
+        <div className="md:hidden overflow-x-auto pb-4 mb-12 scrollbar-hide">
+          <div className="flex gap-4 px-4 min-w-max">
+            {packs
+              .filter((p) => p.id !== "custom")
+              .map((pack, i) => {
+                const name = t(pack.name_key);
+                const hasDiscount = pack.discount > 0;
+                const isPopular = pack.highlighted;
+                return (
+                  <motion.div
+                    key={pack.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: i * 0.1 }}>
+                    <GlassCard glow={isPopular} className="p-6 relative overflow-hidden w-72 shrink-0 flex flex-col">
+                      {isPopular && (
+                        <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl">
+                          {lang === "fr" ? "POPULAIRE" : "POPULAR"}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-center mb-6">
+                        <div className="w-16 h-16 rounded-2xl glass flex items-center justify-center">
+                          {pack.id === "solo" && <User className="h-8 w-8 text-accent" />}
+                          {pack.id === "duo" && <Users className="h-8 w-8 text-accent" />}
+                          {pack.id === "family" && <Users className="h-8 w-8 text-accent" />}
+                        </div>
+                      </div>
+
+                      <div className="text-center mb-6">
+                        <h3 className="text-2xl font-bold text-t-primary mb-2">{name}</h3>
+                        <p className="text-sm text-t-muted">
+                          {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
+                        </p>
+                      </div>
+
+                      {hasDiscount && (
+                        <div className="flex items-center justify-center gap-3 mb-4">
+                          <span className="text-sm text-green font-semibold bg-green-dim px-3 py-1 rounded-lg">
+                            -{pack.discount}%
+                          </span>
+                          <span className="text-sm text-t-muted line-through">
+                            {(pack.price / (1 - pack.discount / 100)).toFixed(0)}€
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="text-center mb-6">
+                        <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums">
+                          {pack.price.toFixed(0)}€
+                        </span>
+                        <p className="text-sm text-t-muted mt-2">
+                          {pack.unit_price.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}
+                        </p>
+                      </div>
+
+                      <div className="space-y-3 mb-8">
+                        <div className="flex items-center gap-2 text-sm text-t-secondary">
+                          <Check className="h-4 w-4 text-green" />
+                          <span>{lang === "fr" ? "Livraison instantanée" : "Instant delivery"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-t-secondary">
+                          <Check className="h-4 w-4 text-green" />
+                          <span>{lang === "fr" ? "Garantie 30 jours" : "30-day guarantee"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-t-secondary">
+                          <Check className="h-4 w-4 text-green" />
+                          <span>{lang === "fr" ? "Paiement sécurisé" : "Secure payment"}</span>
+                        </div>
+                      </div>
+
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate(`/checkout/${pack.id}`)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow mt-auto mb-2">
+                        {lang === "fr" ? "Acheter" : "Buy"}
+                        <ArrowRight className="h-5 w-5" />
+                      </motion.button>
+
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => addToCart(pack)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 glass hover:bg-white/10 text-t-primary font-medium rounded-xl transition-all text-sm">
+                        <ShoppingCart className="h-4 w-4" />
+                        {lang === "fr" ? "Ajouter" : "Add"}
+                      </motion.button>
+                    </GlassCard>
+                  </motion.div>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Desktop: Grid */}
+        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {packs
             .filter((p) => p.id !== "custom")
             .map((pack, i) => {
@@ -149,9 +247,18 @@ export default function Offers() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => navigate(`/checkout/${pack.id}`)}
-                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow mt-auto">
-                      {lang === "fr" ? "Choisir" : "Choose"}
+                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow mt-auto mb-2">
+                      {lang === "fr" ? "Acheter" : "Buy"}
                       <ArrowRight className="h-5 w-5" />
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => addToCart(pack)}
+                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 glass hover:bg-white/10 text-t-primary font-medium rounded-xl transition-all text-sm">
+                      <ShoppingCart className="h-4 w-4" />
+                      {lang === "fr" ? "Ajouter au panier" : "Add to cart"}
                     </motion.button>
                   </GlassCard>
                 </motion.div>

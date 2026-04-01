@@ -29,17 +29,23 @@ export default function CartSlidePanel({ isOpen, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50"
           />
 
           {/* Slide Panel */}
           <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-[85%] max-w-md glass backdrop-blur-xl border-l border-border z-50 flex flex-col shadow-2xl">
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
+            transition={{ 
+              type: "spring", 
+              damping: 35, 
+              stiffness: 280,
+              opacity: { duration: 0.25 }
+            }}
+            className="fixed right-0 top-0 h-full w-[90%] max-w-sm glass backdrop-blur-2xl border-l border-white/10 z-50 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.5)]">
             
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border">
