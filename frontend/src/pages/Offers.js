@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { useCart } from "@/context/CartContext";
 import { Slider } from "@/components/ui/slider";
-import { ArrowRight, Check, Zap, Shield, Users, User } from "lucide-react";
+import { ArrowRight, Check, Zap, Shield, Users, User, ShoppingCart } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
