@@ -1,14 +1,12 @@
-import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
-import { Equalizer } from "@/components/Equalizer";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Globe, Menu, X, LogOut, User, UserCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { Globe, Menu, X } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,27 +15,12 @@ export default function Header() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [hasEmail, setHasEmail] = useState(false);
-  const [isAdminIp, setIsAdminIp] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const check = () => setHasEmail(!!localStorage.getItem("deezlink_email"));
-    check();
-    window.addEventListener("storage", check);
-    window.addEventListener("deezlink_email_update", check);
-    return () => {
-      window.removeEventListener("storage", check);
-      window.removeEventListener("deezlink_email_update", check);
-    };
-  }, []);
-
-  useEffect(() => {
-    axios.get(`${API}/admin/check-ip`, { withCredentials: true }).then((r) => {
-      setIsAdminIp(r.data.is_admin);
-      if (r.data.is_admin) {
-        axios.post(`${API}/admin/auto-login`, {}, { withCredentials: true }).catch(() => {});
-      }
-    }).catch(() => {});
+    axios.get(`${API}/admin/check-ip`, { withCredentials: true })
+      .then((r) => { setIsAdmin(r.data.is_admin); if (r.data.is_admin) axios.post(`${API}/admin/auto-login`, {}, { withCredentials: true }).catch(() => {}); })
+      .catch(() => {});
   }, []);
 
   const changeLang = (lng) => {
@@ -46,106 +29,72 @@ export default function Header() {
     document.documentElement.lang = lng;
   };
 
-  const isActive = (path) => location.pathname === path;
-
-  const navLinks = [
-    { to: "/", label: t("nav_home") },
-    { to: "/offers", label: t("nav_offers") },
-  ];
-  if (hasEmail || (user && user.role !== "admin")) {
-    navLinks.push({ to: "/history", label: t("nav_history") });
-  }
-  if (isAdminIp && user && user.role === "admin") {
-    navLinks.push({ to: "/admin", label: t("nav_admin") });
-  }
+  const active = (p) => location.pathname === p;
 
   return (
-    <header className="glass-nav fixed top-0 inset-x-0 z-40" data-testid="header">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between h-16">
-        <Link to="/" className="flex items-center gap-2.5 group" data-testid="logo-link">
-          <Equalizer count={4} color="#818CF8" height={18} />
-          <span className="font-heading font-extrabold text-lg text-white tracking-tight">
-            Deez<span className="text-primary-light">Link</span>
-          </span>
+    <header className="sticky top-0 z-40 bg-bg/90 backdrop-blur-sm border-b border-border">
+      <div className="max-w-5xl mx-auto px-5 flex items-center justify-between h-14">
+        <Link to="/" className="text-t-primary font-semibold text-[15px] tracking-tight">
+          Deez<span className="text-accent">Link</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1" data-testid="desktop-nav">
-          {navLinks.map((link) => (
-            <Link key={link.to} to={link.to} data-testid={`nav-${link.to.replace("/", "") || "home"}`}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                isActive(link.to) ? "bg-white/10 text-primary-light" : "text-text-secondary hover:text-white hover:bg-white/5"
-              }`}>
-              {link.label}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link to="/" className={`text-[13px] transition-colors ${active("/") || active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            {t("nav_offers")}
+          </Link>
+          {user && user.role !== "admin" && (
+            <Link to="/history" className={`text-[13px] transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+              {t("nav_history")}
             </Link>
-          ))}
+          )}
+          {isAdmin && user && user.role === "admin" && (
+            <Link to="/admin" className={`text-[13px] transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+              Admin
+            </Link>
+          )}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm"
-                className="text-text-secondary hover:text-white hover:bg-white/5 gap-1.5 text-xs font-mono rounded-xl"
-                data-testid="lang-switcher-btn">
-                <Globe className="h-3.5 w-3.5" /> {i18n.language?.toUpperCase()}
-              </Button>
+            <DropdownMenuTrigger className="text-t-muted hover:text-t-secondary text-[12px] flex items-center gap-1 outline-none">
+              <Globe className="h-3.5 w-3.5" /> {i18n.language?.toUpperCase()}
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-surface border-border-subtle min-w-[80px]">
-              {["en", "fr", "ar"].map((lng) => (
-                <DropdownMenuItem key={lng} onClick={() => changeLang(lng)} data-testid={`lang-${lng}`}
-                  className={`cursor-pointer text-xs font-mono ${i18n.language === lng ? "text-primary-light" : "text-text-secondary"}`}>
-                  {t(`lang_${lng}`)}
+            <DropdownMenuContent className="bg-surface border-border min-w-[60px]">
+              {["fr", "en", "ar"].map((lng) => (
+                <DropdownMenuItem key={lng} onClick={() => changeLang(lng)}
+                  className={`text-[12px] cursor-pointer ${i18n.language === lng ? "text-accent" : "text-t-secondary"}`}>
+                  {lng.toUpperCase()}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
           {user && user.role !== "admin" ? (
-            <div className="hidden md:flex items-center gap-1">
-              <Link to="/profile">
-                <Button variant="ghost" size="sm" className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl">
-                  <UserCircle className="h-3.5 w-3.5" /> {t("nav_profile")}
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" onClick={logout}
-                className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl" data-testid="logout-btn">
-                <LogOut className="h-3.5 w-3.5" /> {t("nav_logout")}
-              </Button>
+            <div className="hidden md:flex items-center gap-3">
+              <Link to="/profile" className="text-[13px] text-t-secondary hover:text-t-primary transition-colors">{t("nav_profile")}</Link>
+              <button onClick={logout} className="text-[13px] text-t-muted hover:text-t-secondary transition-colors">{t("nav_logout")}</button>
             </div>
           ) : !user ? (
-            <Link to="/login" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm"
-                className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl" data-testid="login-link">
-                <User className="h-3.5 w-3.5" /> {t("nav_login")}
-              </Button>
-            </Link>
+            <Link to="/login" className="hidden md:block text-[13px] text-t-secondary hover:text-t-primary transition-colors">{t("nav_login")}</Link>
           ) : null}
 
-          <Button variant="ghost" size="icon" className="md:hidden text-text-secondary h-8 w-8"
-            onClick={() => setMobileOpen(!mobileOpen)} data-testid="mobile-menu-btn">
+          <button className="md:hidden text-t-secondary" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-surface/95 backdrop-blur-xl border-t border-border-subtle px-6 py-4 space-y-1" data-testid="mobile-nav">
-          {navLinks.map((link) => (
-            <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}
-              className={`block px-3 py-2.5 rounded-xl text-sm font-medium ${isActive(link.to) ? "text-primary-light bg-white/5" : "text-text-secondary"}`}>
-              {link.label}
-            </Link>
-          ))}
-          {user && user.role !== "admin" ? (
+        <div className="md:hidden border-t border-border bg-surface px-5 py-3 space-y-1">
+          <Link to="/" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_offers")}</Link>
+          {user && user.role !== "admin" && (
             <>
-              <Link to="/profile" onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_profile")}</Link>
-              <button onClick={() => { logout(); setMobileOpen(false); }}
-                className="w-full text-start px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_logout")}</button>
+              <Link to="/history" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_history")}</Link>
+              <Link to="/profile" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_profile")}</Link>
+              <button onClick={() => { logout(); setMobileOpen(false); }} className="block py-2 text-[13px] text-t-muted">{t("nav_logout")}</button>
             </>
-          ) : !user ? (
-            <Link to="/login" onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_login")}</Link>
-          ) : null}
+          )}
+          {!user && <Link to="/login" onClick={() => setMobileOpen(false)} className="block py-2 text-[13px] text-t-secondary">{t("nav_login")}</Link>}
         </div>
       )}
     </header>

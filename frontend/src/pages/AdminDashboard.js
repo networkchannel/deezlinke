@@ -151,27 +151,27 @@ export default function AdminDashboard() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-accent-light" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
       </div>
     );
   }
 
   const statusColor = {
-    completed: "bg-emerald/10 text-emerald border-emerald/20",
-    pending: "bg-turbo/10 text-turbo border-turbo/20",
-    payment_mock: "bg-accent/10 text-accent-light border-accent/20",
+    completed: "bg-green/10 text-green border-green/20",
+    pending: "bg-yellow-500/10 text-yellow-500 border-turbo/20",
+    payment_mock: "bg-accent/10 text-accent border-accent/20",
     failed: "bg-red-500/10 text-red-400 border-red-400/20",
   };
 
   const eventTypeColor = {
     failed_login: "bg-red-500/10 text-red-400",
-    successful_login: "bg-emerald/10 text-emerald",
-    magic_link_requested: "bg-accent/10 text-accent-light",
-    magic_link_verified: "bg-emerald/10 text-emerald",
+    successful_login: "bg-green/10 text-green",
+    magic_link_requested: "bg-accent/10 text-accent",
+    magic_link_verified: "bg-green/10 text-green",
     magic_link_rate_limit_ip: "bg-red-500/10 text-red-400",
-    magic_link_rate_limit_email: "bg-turbo/10 text-turbo",
-    admin_block_ip: "bg-rose/10 text-rose",
-    admin_unblock_ip: "bg-emerald/10 text-emerald",
+    magic_link_rate_limit_email: "bg-yellow-500/10 text-yellow-500",
+    admin_block_ip: "bg-red-500/10 text-red-500",
+    admin_unblock_ip: "bg-green/10 text-green",
   };
 
   const getCountryFlag = (code) => {
@@ -186,13 +186,13 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
-            <h1 className="font-heading font-bold text-3xl" data-testid="admin-title">
+            <h1 className="font-bold text-3xl" data-testid="admin-title">
               {t("admin_title")}
             </h1>
             <Button
               onClick={() => { fetchData(); fetchSecurityData(); fetchAnalytics(); }}
               variant="outline"
-              className="border-border-subtle text-text-secondary hover:bg-white/5"
+              className="border-border text-t-secondary hover:bg-surface-2"
               disabled={refreshing}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
@@ -213,9 +213,9 @@ export default function AdminDashboard() {
                 <div key={i} className="admin-widget" data-testid={`stat-${i}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
-                    <span className="text-text-muted text-xs">{stat.label}</span>
+                    <span className="text-t-muted text-xs">{stat.label}</span>
                   </div>
-                  <span className="font-heading font-black text-2xl text-white">{stat.value}</span>
+                  <span className="font-black text-2xl text-white">{stat.value}</span>
                 </div>
               ))}
             </div>
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-5 w-5 text-red-400" />
               <div>
                 <span className="text-red-400 font-medium">Alerte Sécurité: </span>
-                <span className="text-text-secondary">
+                <span className="text-t-secondary">
                   {stats.security.blocked_ips} IP(s) bloquée(s), {stats.security.failed_logins_24h} tentatives échouées (24h)
                 </span>
               </div>
@@ -240,24 +240,24 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" data-testid="admin-tabs">
-            <TabsList className="bg-surface border border-border-subtle flex-wrap">
-              <TabsTrigger value="overview" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary">
+            <TabsList className="bg-surface border border-border flex-wrap">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-surface-3 data-[state=active]:text-white text-t-secondary">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Vue d'ensemble
               </TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary">
+              <TabsTrigger value="orders" className="data-[state=active]:bg-surface-3 data-[state=active]:text-white text-t-secondary">
                 <Package className="h-4 w-4 mr-2" />
                 Commandes
               </TabsTrigger>
-              <TabsTrigger value="links" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary">
+              <TabsTrigger value="links" className="data-[state=active]:bg-surface-3 data-[state=active]:text-white text-t-secondary">
                 <Link2 className="h-4 w-4 mr-2" />
                 Liens
               </TabsTrigger>
-              <TabsTrigger value="users" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary">
+              <TabsTrigger value="users" className="data-[state=active]:bg-surface-3 data-[state=active]:text-white text-t-secondary">
                 <Users className="h-4 w-4 mr-2" />
                 Utilisateurs
               </TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary">
+              <TabsTrigger value="security" className="data-[state=active]:bg-surface-3 data-[state=active]:text-white text-t-secondary">
                 <Shield className="h-4 w-4 mr-2" />
                 Sécurité
               </TabsTrigger>
@@ -268,27 +268,27 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Top Customers */}
                 <div className="admin-widget">
-                  <h3 className="font-heading font-bold text-sm mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-emerald" />
+                  <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-green" />
                     Top Clients
                   </h3>
                   <div className="space-y-3">
                     {analytics?.top_customers?.slice(0, 5).map((customer, i) => (
                       <div key={i} className="flex justify-between items-center p-2 bg-white/3 rounded-lg">
-                        <span className="text-sm text-text-secondary truncate flex-1">{customer._id}</span>
-                        <Badge className="bg-emerald/10 text-emerald ml-2">{customer.total_spent?.toFixed(2)}€</Badge>
+                        <span className="text-sm text-t-secondary truncate flex-1">{customer._id}</span>
+                        <Badge className="bg-green/10 text-green ml-2">{customer.total_spent?.toFixed(2)}€</Badge>
                       </div>
                     ))}
                     {(!analytics?.top_customers || analytics.top_customers.length === 0) && (
-                      <p className="text-text-muted text-sm">Aucune donnée</p>
+                      <p className="text-t-muted text-sm">Aucune donnée</p>
                     )}
                   </div>
                 </div>
 
                 {/* Users by Country */}
                 <div className="admin-widget">
-                  <h3 className="font-heading font-bold text-sm mb-4 flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-accent-light" />
+                  <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-accent" />
                     Utilisateurs par Pays
                   </h3>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -299,24 +299,24 @@ export default function AdminDashboard() {
                         <div key={code} className="flex justify-between items-center p-2 bg-white/3 rounded-lg">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{getCountryFlag(code)}</span>
-                            <span className="text-sm text-text-secondary">{data.country_name || code}</span>
+                            <span className="text-sm text-t-secondary">{data.country_name || code}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-accent/10 text-accent-light">{data.count} users</Badge>
-                            <Badge className="bg-emerald/10 text-emerald">{data.revenue?.toFixed(0) || 0}€</Badge>
+                            <Badge className="bg-accent/10 text-accent">{data.count} users</Badge>
+                            <Badge className="bg-green/10 text-green">{data.revenue?.toFixed(0) || 0}€</Badge>
                           </div>
                         </div>
                       ))}
                     {Object.keys(usersByCountry).length === 0 && (
-                      <p className="text-text-muted text-sm">Aucune donnée</p>
+                      <p className="text-t-muted text-sm">Aucune donnée</p>
                     )}
                   </div>
                 </div>
 
                 {/* Recent Security Events */}
                 <div className="admin-widget lg:col-span-2">
-                  <h3 className="font-heading font-bold text-sm mb-4 flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-rose" />
+                  <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-red-500" />
                     Activité Récente (Sécurité)
                   </h3>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -326,13 +326,13 @@ export default function AdminDashboard() {
                           <Badge className={eventTypeColor[log.event] || "bg-gray-500/10 text-gray-400"}>
                             {log.event?.replace(/_/g, ' ')}
                           </Badge>
-                          <span className="text-text-muted">{log.email || log.ip}</span>
+                          <span className="text-t-muted">{log.email || log.ip}</span>
                         </div>
-                        <span className="text-text-muted">{new Date(log.timestamp).toLocaleString()}</span>
+                        <span className="text-t-muted">{new Date(log.timestamp).toLocaleString()}</span>
                       </div>
                     ))}
                     {securityLogs.length === 0 && (
-                      <p className="text-text-muted text-sm">Aucun événement</p>
+                      <p className="text-t-muted text-sm">Aucun événement</p>
                     )}
                   </div>
                 </div>
@@ -341,36 +341,36 @@ export default function AdminDashboard() {
 
             {/* Orders Tab */}
             <TabsContent value="orders">
-              <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden" data-testid="orders-table">
+              <div className="bg-surface border border-border rounded-xl overflow-hidden" data-testid="orders-table">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border-subtle hover:bg-transparent">
-                      <TableHead className="text-text-muted">ID</TableHead>
-                      <TableHead className="text-text-muted">Email</TableHead>
-                      <TableHead className="text-text-muted">Pack</TableHead>
-                      <TableHead className="text-text-muted">{t("history_amount")}</TableHead>
-                      <TableHead className="text-text-muted">{t("history_status")}</TableHead>
-                      <TableHead className="text-text-muted">{t("history_date")}</TableHead>
-                      <TableHead className="text-text-muted"></TableHead>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-t-muted">ID</TableHead>
+                      <TableHead className="text-t-muted">Email</TableHead>
+                      <TableHead className="text-t-muted">Pack</TableHead>
+                      <TableHead className="text-t-muted">{t("history_amount")}</TableHead>
+                      <TableHead className="text-t-muted">{t("history_status")}</TableHead>
+                      <TableHead className="text-t-muted">{t("history_date")}</TableHead>
+                      <TableHead className="text-t-muted"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {orders.map((order) => (
-                      <TableRow key={order.order_id} className="border-border-subtle hover:bg-white/3">
+                      <TableRow key={order.order_id} className="border-border hover:bg-white/3">
                         <TableCell className="font-mono text-xs">
-                          <Link to={`/order/${order.order_id}`} className="text-emerald hover:underline">
+                          <Link to={`/order/${order.order_id}`} className="text-green hover:underline">
                             {order.order_id}
                           </Link>
                         </TableCell>
-                        <TableCell className="text-sm text-text-secondary">{order.email}</TableCell>
-                        <TableCell className="text-sm text-text-muted">{order.pack_id} ({order.quantity})</TableCell>
-                        <TableCell className="font-heading font-bold">{order.price}€</TableCell>
+                        <TableCell className="text-sm text-t-secondary">{order.email}</TableCell>
+                        <TableCell className="text-sm text-t-muted">{order.pack_id} ({order.quantity})</TableCell>
+                        <TableCell className="font-bold">{order.price}€</TableCell>
                         <TableCell>
                           <Badge className={statusColor[order.status] || statusColor.pending}>
                             {order.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs text-text-muted">
+                        <TableCell className="text-xs text-t-muted">
                           {new Date(order.created_at).toLocaleString()}
                         </TableCell>
                         <TableCell>
@@ -378,7 +378,7 @@ export default function AdminDashboard() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteOrder(order.order_id)}
-                            className="text-text-muted hover:text-red-400"
+                            className="text-t-muted hover:text-red-400"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -387,7 +387,7 @@ export default function AdminDashboard() {
                     ))}
                     {orders.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-text-muted">
+                        <TableCell colSpan={7} className="text-center py-8 text-t-muted">
                           Aucune commande
                         </TableCell>
                       </TableRow>
@@ -403,20 +403,20 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Import */}
                   <div className="admin-widget">
-                    <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                      <Upload className="h-4 w-4 text-rose" />
+                    <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                      <Upload className="h-4 w-4 text-red-500" />
                       {t("admin_import")}
                     </h3>
                     <textarea
                       value={importText}
                       onChange={(e) => setImportText(e.target.value)}
                       placeholder={t("admin_import_placeholder")}
-                      className="w-full bg-white/5 border border-border-subtle rounded-lg p-3 text-sm text-white placeholder:text-text-muted focus:ring-rose focus:border-rose min-h-[100px] resize-y"
+                      className="w-full bg-surface-2 border border-border rounded-lg p-3 text-sm text-white placeholder:text-t-muted focus:ring-rose focus:border-rose min-h-[100px] resize-y"
                     />
                     <Button
                       onClick={handleImport}
                       disabled={importing}
-                      className="mt-2 bg-rose hover:bg-rose/80 text-white rounded-lg"
+                      className="mt-2 bg-red-500 hover:bg-red-500/80 text-white rounded-lg"
                     >
                       {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : t("admin_import_btn")}
                     </Button>
@@ -424,8 +424,8 @@ export default function AdminDashboard() {
 
                   {/* Add single */}
                   <div className="admin-widget">
-                    <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                      <Plus className="h-4 w-4 text-emerald" />
+                    <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                      <Plus className="h-4 w-4 text-green" />
                       {t("admin_add_link")}
                     </h3>
                     <div className="flex gap-3">
@@ -433,7 +433,7 @@ export default function AdminDashboard() {
                         value={singleLink}
                         onChange={(e) => setSingleLink(e.target.value)}
                         placeholder={t("admin_add_placeholder")}
-                        className="bg-white/5 border-border-subtle text-white placeholder:text-text-muted"
+                        className="bg-surface-2 border-border text-white placeholder:text-t-muted"
                       />
                       <Button
                         onClick={handleAddSingle}
@@ -446,35 +446,35 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {msg && <p className="text-emerald text-sm">{msg}</p>}
+                {msg && <p className="text-green text-sm">{msg}</p>}
 
                 {/* Links table */}
-                <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
+                <div className="bg-surface border border-border rounded-xl overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-border-subtle hover:bg-transparent">
-                        <TableHead className="text-text-muted">URL</TableHead>
-                        <TableHead className="text-text-muted">{t("history_status")}</TableHead>
-                        <TableHead className="text-text-muted">{t("history_order_id")}</TableHead>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="text-t-muted">URL</TableHead>
+                        <TableHead className="text-t-muted">{t("history_status")}</TableHead>
+                        <TableHead className="text-t-muted">{t("history_order_id")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {links.map((link, i) => (
-                        <TableRow key={i} className="border-border-subtle hover:bg-white/3">
+                        <TableRow key={i} className="border-border hover:bg-white/3">
                           <TableCell className="font-mono text-xs truncate max-w-[300px]">{link.url}</TableCell>
                           <TableCell>
-                            <Badge className={link.status === "available" ? "bg-emerald/10 text-emerald border-emerald/20" : "bg-text-muted/10 text-text-muted border-text-muted/20"}>
+                            <Badge className={link.status === "available" ? "bg-green/10 text-green border-green/20" : "bg-text-muted/10 text-t-muted border-text-muted/20"}>
                               {link.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-text-muted">
+                          <TableCell className="font-mono text-xs text-t-muted">
                             {link.order_id || "-"}
                           </TableCell>
                         </TableRow>
                       ))}
                       {links.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={3} className="text-center py-8 text-text-muted">
+                          <TableCell colSpan={3} className="text-center py-8 text-t-muted">
                             Aucun lien
                           </TableCell>
                         </TableRow>
@@ -487,36 +487,36 @@ export default function AdminDashboard() {
 
             {/* Users Tab */}
             <TabsContent value="users">
-              <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
+              <div className="bg-surface border border-border rounded-xl overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-border-subtle hover:bg-transparent">
-                      <TableHead className="text-text-muted">Email</TableHead>
-                      <TableHead className="text-text-muted">Pays</TableHead>
-                      <TableHead className="text-text-muted">Fidélité</TableHead>
-                      <TableHead className="text-text-muted">Dernière IP</TableHead>
-                      <TableHead className="text-text-muted">Inscrit le</TableHead>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-t-muted">Email</TableHead>
+                      <TableHead className="text-t-muted">Pays</TableHead>
+                      <TableHead className="text-t-muted">Fidélité</TableHead>
+                      <TableHead className="text-t-muted">Dernière IP</TableHead>
+                      <TableHead className="text-t-muted">Inscrit le</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {users.map((u, i) => (
-                      <TableRow key={i} className="border-border-subtle hover:bg-white/3">
+                      <TableRow key={i} className="border-border hover:bg-white/3">
                         <TableCell className="text-sm">
                           <div className="flex items-center gap-2">
-                            {u.role === "admin" && <Shield className="h-4 w-4 text-rose" />}
+                            {u.role === "admin" && <Shield className="h-4 w-4 text-red-500" />}
                             <span className="text-white">{u.email}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{getCountryFlag(u.country)}</span>
-                            <span className="text-text-secondary text-sm">{u.country || "N/A"}</span>
+                            <span className="text-t-secondary text-sm">{u.country || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge className={
                             u.loyalty_tier?.tier === "diamond" ? "bg-cyan-500/10 text-cyan-400" :
-                            u.loyalty_tier?.tier === "platinum" ? "bg-accent/10 text-accent-light" :
+                            u.loyalty_tier?.tier === "platinum" ? "bg-accent/10 text-accent" :
                             u.loyalty_tier?.tier === "gold" ? "bg-yellow-500/10 text-yellow-400" :
                             u.loyalty_tier?.tier === "silver" ? "bg-gray-400/10 text-gray-300" :
                             "bg-orange-500/10 text-orange-400"
@@ -524,17 +524,17 @@ export default function AdminDashboard() {
                             {u.loyalty_tier?.name || "Bronze"} ({u.loyalty_points || 0} pts)
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-mono text-xs text-text-muted">
+                        <TableCell className="font-mono text-xs text-t-muted">
                           {u.last_ip || "-"}
                         </TableCell>
-                        <TableCell className="text-xs text-text-muted">
+                        <TableCell className="text-xs text-t-muted">
                           {u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}
                         </TableCell>
                       </TableRow>
                     ))}
                     {users.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-text-muted">
+                        <TableCell colSpan={5} className="text-center py-8 text-t-muted">
                           Aucun utilisateur
                         </TableCell>
                       </TableRow>
@@ -553,37 +553,37 @@ export default function AdminDashboard() {
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
                         <Ban className="h-4 w-4 text-red-400" />
-                        <span className="text-text-muted text-xs">IPs Bloquées</span>
+                        <span className="text-t-muted text-xs">IPs Bloquées</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-red-400">{stats.security.blocked_ips}</span>
+                      <span className="font-black text-2xl text-red-400">{stats.security.blocked_ips}</span>
                     </div>
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
-                        <AlertTriangle className="h-4 w-4 text-turbo" />
-                        <span className="text-text-muted text-xs">Échecs Login (24h)</span>
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        <span className="text-t-muted text-xs">Échecs Login (24h)</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-turbo">{stats.security.failed_logins_24h}</span>
+                      <span className="font-black text-2xl text-yellow-500">{stats.security.failed_logins_24h}</span>
                     </div>
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
-                        <Activity className="h-4 w-4 text-accent-light" />
-                        <span className="text-text-muted text-xs">Événements (24h)</span>
+                        <Activity className="h-4 w-4 text-accent" />
+                        <span className="text-t-muted text-xs">Événements (24h)</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-accent-light">{stats.security.recent_events_24h}</span>
+                      <span className="font-black text-2xl text-accent">{stats.security.recent_events_24h}</span>
                     </div>
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
-                        <Shield className="h-4 w-4 text-emerald" />
-                        <span className="text-text-muted text-xs">Rate Limits Actifs</span>
+                        <Shield className="h-4 w-4 text-green" />
+                        <span className="text-t-muted text-xs">Rate Limits Actifs</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-emerald">{stats.security.active_rate_limits}</span>
+                      <span className="font-black text-2xl text-green">{stats.security.active_rate_limits}</span>
                     </div>
                   </div>
                 )}
 
                 {/* Block IP Manual */}
                 <div className="admin-widget">
-                  <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
                     <Ban className="h-4 w-4 text-red-400" />
                     Bloquer une IP manuellement
                   </h3>
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
                       value={blockIpInput}
                       onChange={(e) => setBlockIpInput(e.target.value)}
                       placeholder="Adresse IP (ex: 192.168.1.1)"
-                      className="bg-white/5 border-border-subtle text-white placeholder:text-text-muted"
+                      className="bg-surface-2 border-border text-white placeholder:text-t-muted"
                     />
                     <Button onClick={handleBlockIp} className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-4">
                       <Ban className="h-4 w-4 mr-2" />
@@ -604,7 +604,7 @@ export default function AdminDashboard() {
                 {/* Currently Blocked */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="admin-widget">
-                    <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
+                    <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
                       <Ban className="h-4 w-4 text-red-400" />
                       IPs Bloquées
                     </h3>
@@ -613,33 +613,33 @@ export default function AdminDashboard() {
                         <div key={i} className="flex justify-between items-center p-2 bg-red-500/10 rounded-lg">
                           <div>
                             <span className="font-mono text-sm text-red-400">{item.ip}</span>
-                            <span className="text-xs text-text-muted ml-2">jusqu'à {new Date(item.until).toLocaleTimeString()}</span>
+                            <span className="text-xs text-t-muted ml-2">jusqu'à {new Date(item.until).toLocaleTimeString()}</span>
                           </div>
-                          <Button size="sm" variant="ghost" onClick={() => handleUnblockIp(item.ip)} className="text-emerald hover:text-emerald">
+                          <Button size="sm" variant="ghost" onClick={() => handleUnblockIp(item.ip)} className="text-green hover:text-green">
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
                       {(!blockedList.blocked_ips || blockedList.blocked_ips.length === 0) && (
-                        <p className="text-text-muted text-sm">Aucune IP bloquée</p>
+                        <p className="text-t-muted text-sm">Aucune IP bloquée</p>
                       )}
                     </div>
                   </div>
 
                   <div className="admin-widget">
-                    <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-turbo" />
+                    <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-yellow-500" />
                       Emails en Cooldown
                     </h3>
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {blockedList.blocked_emails?.map((item, i) => (
-                        <div key={i} className="flex justify-between items-center p-2 bg-turbo/10 rounded-lg">
-                          <span className="text-sm text-turbo">{item.email}</span>
-                          <span className="text-xs text-text-muted">jusqu'à {new Date(item.until).toLocaleTimeString()}</span>
+                        <div key={i} className="flex justify-between items-center p-2 bg-yellow-500/10 rounded-lg">
+                          <span className="text-sm text-yellow-500">{item.email}</span>
+                          <span className="text-xs text-t-muted">jusqu'à {new Date(item.until).toLocaleTimeString()}</span>
                         </div>
                       ))}
                       {(!blockedList.blocked_emails || blockedList.blocked_emails.length === 0) && (
-                        <p className="text-text-muted text-sm">Aucun email en cooldown</p>
+                        <p className="text-t-muted text-sm">Aucun email en cooldown</p>
                       )}
                     </div>
                   </div>
@@ -647,38 +647,38 @@ export default function AdminDashboard() {
 
                 {/* Security Logs */}
                 <div className="admin-widget">
-                  <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-accent-light" />
+                  <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-accent" />
                     Journal de Sécurité
                   </h3>
-                  <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
+                  <div className="bg-surface border border-border rounded-xl overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-border-subtle hover:bg-transparent">
-                          <TableHead className="text-text-muted">Événement</TableHead>
-                          <TableHead className="text-text-muted">Email/IP</TableHead>
-                          <TableHead className="text-text-muted">IP Source</TableHead>
-                          <TableHead className="text-text-muted">Date</TableHead>
+                        <TableRow className="border-border hover:bg-transparent">
+                          <TableHead className="text-t-muted">Événement</TableHead>
+                          <TableHead className="text-t-muted">Email/IP</TableHead>
+                          <TableHead className="text-t-muted">IP Source</TableHead>
+                          <TableHead className="text-t-muted">Date</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {securityLogs.map((log, i) => (
-                          <TableRow key={i} className="border-border-subtle hover:bg-white/3">
+                          <TableRow key={i} className="border-border hover:bg-white/3">
                             <TableCell>
                               <Badge className={eventTypeColor[log.event] || "bg-gray-500/10 text-gray-400"}>
                                 {log.event?.replace(/_/g, ' ')}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-text-secondary">{log.email || "-"}</TableCell>
-                            <TableCell className="font-mono text-xs text-text-muted">{log.ip}</TableCell>
-                            <TableCell className="text-xs text-text-muted">
+                            <TableCell className="text-sm text-t-secondary">{log.email || "-"}</TableCell>
+                            <TableCell className="font-mono text-xs text-t-muted">{log.ip}</TableCell>
+                            <TableCell className="text-xs text-t-muted">
                               {new Date(log.timestamp).toLocaleString()}
                             </TableCell>
                           </TableRow>
                         ))}
                         {securityLogs.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-text-muted">
+                            <TableCell colSpan={4} className="text-center py-8 text-t-muted">
                               Aucun événement de sécurité
                             </TableCell>
                           </TableRow>

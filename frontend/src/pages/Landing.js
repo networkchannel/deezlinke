@@ -1,81 +1,86 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Equalizer } from "@/components/Equalizer";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import axios from "axios";
-import {
-  ArrowRight, Shield, Zap, Users, ChevronDown, ChevronUp, Music2, Sparkles,
-  Star, Play, Heart, SkipForward, Volume2, Clock, Globe, ChevronRight, Award,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { ArrowRight, ChevronDown, ChevronUp, Zap, Shield, Clock, Check } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── tiny helpers ── */
-const formatFans = (n) => {
-  if (!n) return "—";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return n.toString();
-};
-const formatDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const TIERS = [
+  { min: 1, max: 9, price: "5,00" },
+  { min: 10, max: 49, price: "3,50" },
+  { min: 50, max: 99, price: "3,00" },
+  { min: 100, max: 199, price: "2,00" },
+  { min: 200, max: 499, price: "1,80" },
+  { min: 500, max: null, price: "1,50" },
+];
 
-/* ── Animated Waveform ── */
-function Waveform({ bars = 48, color = "#818CF8", active = true }) {
+/* Scroll-reveal wrapper — fades in + slides up when entering viewport */
+function Reveal({ children, className = "", delay = 0 }) {
   const ref = useRef(null);
-  useEffect(() => {
-    if (!ref.current || !active) return;
-    const els = ref.current.children;
-    const id = setInterval(() => {
-      for (let i = 0; i < els.length; i++) {
-        const h = 8 + Math.random() * 32;
-        els[i].style.height = `${h}px`;
-      }
-    }, 180);
-    return () => clearInterval(id);
-  }, [active, bars]);
-
+  const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
-    <div ref={ref} className="flex items-end gap-[1.5px] h-10 overflow-hidden">
-      {Array.from({ length: bars }).map((_, i) => (
-        <div key={i} className="rounded-sm transition-all duration-150"
-          style={{ width: 2.5, height: 8 + Math.random() * 28, background: color, opacity: 0.6 + Math.random() * 0.4 }} />
-      ))}
-    </div>
+    <motion.div ref={ref}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      className={className}>
+      {children}
+    </motion.div>
   );
 }
 
-/* ── Motion wrapper ── */
-const MC = ({ children, delay = 0, className = "" }) => (
-  <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-40px" }} transition={{ duration: 0.6, delay, ease: [0.25, 0.1, 0.25, 1] }}
-    className={className}>{children}</motion.div>
-);
+/* Interactive card — lifts on hover */
+function Card({ children, className = "", highlighted = false, onClick }) {
+  return (
+    <motion.div
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      onClick={onClick}
+      className={`bg-surface border rounded-xl transition-colors duration-200 ${highlighted ? "border-accent/40 hover:border-accent/60" : "border-border hover:border-border-hover"} ${onClick ? "cursor-pointer" : ""} ${className}`}>
+      {children}
+    </motion.div>
+  );
+}
+
+/* CTA button with micro-interaction */
+function CTA({ children, onClick, className = "", full = false }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors ${full ? "w-full" : ""} ${className}`}>
+      {children}
+    </motion.button>
+  );
+}
 
 export default function Landing() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const lang = i18n.language || "fr";
+  const [packs, setPacks] = useState([]);
+  const [customQty, setCustomQty] = useState(25);
+  const [pricing, setPricing] = useState(null);
+  const [stats, setStats] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
-  const [stats, setStats] = useState({ users: 0, links: 0, orders: 0 });
-  const [deezer, setDeezer] = useState({ tracks: [], artists: [], albums: [] });
-  const [heroTrackIdx, setHeroTrackIdx] = useState(0);
-  const [liked, setLiked] = useState({});
-  const lang = i18n.language || "en";
+  const [deezer, setDeezer] = useState({ artists: [] });
 
   useEffect(() => {
+    axios.get(`${API}/packs`).then((r) => setPacks(r.data.packs || r.data)).catch(() => {});
     axios.get(`${API}/stats/public`).then((r) => setStats(r.data)).catch(() => {});
     axios.get(`${API}/deezer/trending`).then((r) => setDeezer(r.data)).catch(() => {});
   }, []);
 
-  // Auto-rotate hero track
-  useEffect(() => {
-    if (!deezer.tracks.length) return;
-    const id = setInterval(() => setHeroTrackIdx((i) => (i + 1) % Math.min(deezer.tracks.length, 5)), 6000);
-    return () => clearInterval(id);
-  }, [deezer.tracks]);
-
-  const heroTrack = deezer.tracks[heroTrackIdx] || null;
-  const nextTracks = useMemo(() => deezer.tracks.slice(0, 5).filter((_, i) => i !== heroTrackIdx), [deezer.tracks, heroTrackIdx]);
+  const fetchPricing = useCallback(() => {
+    const timer = setTimeout(() => {
+      axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => setPricing(r.data)).catch(() => {});
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [customQty]);
+  useEffect(fetchPricing, [fetchPricing]);
 
   const faqs = [
     { q: t("faq_q1"), a: t("faq_a1") },
@@ -84,407 +89,307 @@ export default function Landing() {
     { q: t("faq_q4"), a: t("faq_a4") },
   ];
 
-  const features = [
-    { icon: Zap, title: t("feat_instant"), desc: t("feat_instant_desc"), color: "text-teal", bg: "from-teal/20 to-teal/5", border: "border-teal/15" },
-    { icon: Shield, title: t("feat_secure"), desc: t("feat_secure_desc"), color: "text-primary-light", bg: "from-primary/20 to-primary/5", border: "border-primary/15" },
-    { icon: Users, title: t("feat_loyalty"), desc: t("feat_loyalty_desc"), color: "text-accent-light", bg: "from-accent/20 to-accent/5", border: "border-accent/15" },
-  ];
+  const ordersDelivered = stats?.orders || 0;
+
+  const scrollToPacks = () => document.getElementById("packs")?.scrollIntoView({ behavior: "smooth" });
 
   return (
-    <section className="relative overflow-hidden" data-testid="landing-page">
+    <div className="max-w-6xl mx-auto px-5 md:px-8">
+
       {/* ═══════════════ HERO ═══════════════ */}
-      <div className="relative min-h-[90vh] flex items-center">
-        {/* BG effects */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/[0.08] via-transparent to-accent/[0.06]" />
-          <div className="absolute top-1/3 right-1/4 w-[700px] h-[700px] rounded-full bg-primary/[0.06] blur-[150px]" />
-          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-teal/[0.04] blur-[120px]" />
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-accent/[0.05] blur-[100px]" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-32 grid md:grid-cols-2 gap-12 lg:gap-16 items-center relative z-10 w-full">
-          {/* LEFT – Text */}
-          <div>
-            <MC>
-              <div className="inline-flex items-center gap-2 px-4 py-2 glass-card rounded-full mb-6">
-                <Equalizer count={3} color="#818CF8" height={14} />
-                <span className="text-xs text-text-secondary font-medium">{t("hero_badge")}</span>
-              </div>
-            </MC>
-
-            <MC delay={0.1}>
-              <h1 className="font-heading font-extrabold text-4xl sm:text-5xl md:text-5xl lg:text-6xl tracking-tight leading-[1.05]">
-                <span className="text-white">{t("hero_title_1")}</span>
-                <br />
-                <span className="gradient-text">{t("hero_title_2")}</span>
-              </h1>
-            </MC>
-
-            <MC delay={0.15}>
-              <p className="text-text-secondary text-base max-w-md mt-5 leading-relaxed">{t("hero_sub")}</p>
-            </MC>
-
-            <MC delay={0.2}>
-              <div className="flex flex-wrap items-center gap-4 mt-8">
-                <Link to="/offers">
-                  <Button size="lg" className="btn-primary rounded-xl px-8 py-5 text-sm font-semibold gap-2 group" data-testid="hero-cta-btn">
-                    <Play className="h-4 w-4 fill-current" /> {t("hero_cta")}
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                  </Button>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-heading font-extrabold gradient-text-teal">1.50€</span>
-                  <span className="text-text-muted text-xs">{t("hero_per_link")}</span>
+      <section className="pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-5 gap-10 md:gap-14 items-start">
+        {/* Left — 3 cols */}
+        <div className="md:col-span-3 pt-2">
+          <Reveal>
+            <p className="text-accent text-[13px] font-medium tracking-wide mb-4">Deezer Premium</p>
+          </Reveal>
+          <Reveal delay={0.05}>
+            <h1 className="text-t-primary font-semibold text-[clamp(2.2rem,5vw,3.4rem)] leading-[1.08] tracking-tight mb-5">
+              {lang === "fr" ? (
+                <>Liens d'activation<br />à partir de <span className="text-green">1,50€</span></>
+              ) : lang === "ar" ? (
+                <>روابط التفعيل<br />ابتداءً من <span className="text-green">1,50€</span></>
+              ) : (
+                <>Activation links<br />starting at <span className="text-green">1,50€</span></>
+              )}
+            </h1>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="text-t-secondary text-[15px] leading-relaxed mb-8 max-w-lg">
+              {lang === "fr"
+                ? "Achetez des liens d'activation Deezer Premium à prix dégressif. Livraison instantanée par email. Paiement crypto accepté — BTC, ETH, USDT, LTC."
+                : lang === "ar"
+                ? "اشترِ روابط تفعيل Deezer Premium بأسعار تنازلية. توصيل فوري عبر البريد. الدفع بالعملات الرقمية."
+                : "Buy Deezer Premium activation links at volume discounts. Instant email delivery. Crypto payment accepted — BTC, ETH, USDT, LTC."}
+            </p>
+          </Reveal>
+          <Reveal delay={0.15}>
+            <div className="flex flex-wrap items-center gap-4 mb-8">
+              <CTA onClick={scrollToPacks} className="text-[14px] px-7 py-3.5">
+                {t("hero_cta")} <ArrowRight className="h-4 w-4" />
+              </CTA>
+              {ordersDelivered > 0 && (
+                <span className="text-t-muted text-[13px]">
+                  {ordersDelivered.toLocaleString()} {lang === "fr" ? "commandes livrées" : "orders delivered"}
+                </span>
+              )}
+            </div>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: Zap, text: lang === "fr" ? "Livraison instantanée" : "Instant delivery" },
+                { icon: Shield, text: lang === "fr" ? "Paiement sécurisé" : "Secure payment" },
+                { icon: Clock, text: lang === "fr" ? "Garanti 30 jours" : "30-day guarantee" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3.5 py-2 text-[12px] text-t-secondary">
+                  <item.icon className="h-3.5 w-3.5 text-t-muted" /> {item.text}
                 </div>
-              </div>
-            </MC>
-
-            <MC delay={0.25}>
-              <div className="flex flex-wrap gap-3 mt-8">
-                {[
-                  { icon: Shield, label: t("hero_secure") },
-                  { icon: Zap, label: t("hero_instant") },
-                  { icon: Globe, label: t("hero_crypto") },
-                ].map((b, i) => (
-                  <div key={i} className="glass-card rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-xs text-text-secondary">
-                    <b.icon className="h-3 w-3 text-text-muted" /> {b.label}
-                  </div>
-                ))}
-              </div>
-            </MC>
-          </div>
-
-          {/* RIGHT – Music Player Card */}
-          <MC delay={0.2} className="relative">
-            {heroTrack ? (
-              <div className="glass-card rounded-3xl overflow-hidden relative group">
-                {/* Album cover BG blur */}
-                <div className="absolute inset-0 z-0">
-                  <img src={heroTrack.album_cover_big || heroTrack.album_cover} alt="" className="w-full h-full object-cover opacity-15 blur-xl scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-void/95 via-void/70 to-void/30" />
-                </div>
-
-                {/* Player content */}
-                <div className="relative z-10 p-6">
-                  {/* Now playing header */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-emerald animate-pulse" />
-                    <span className="text-emerald text-[10px] font-semibold uppercase tracking-widest">
-                      {lang === "fr" ? "En lecture" : "Now Playing"}
-                    </span>
-                    <span className="text-text-muted text-[10px] ml-auto">Deezer Premium</span>
-                  </div>
-
-                  {/* Main track */}
-                  <div className="flex gap-5 mb-5">
-                    <AnimatePresence mode="wait">
-                      <motion.div key={heroTrack.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }} className="flex-shrink-0">
-                        <img src={heroTrack.album_cover_big || heroTrack.album_cover}
-                          alt={heroTrack.title}
-                          className="w-28 h-28 rounded-2xl object-cover shadow-2xl ring-1 ring-white/10" />
-                      </motion.div>
-                    </AnimatePresence>
-                    <div className="flex-1 min-w-0 py-1">
-                      <AnimatePresence mode="wait">
-                        <motion.div key={heroTrack.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                          <h3 className="font-heading font-bold text-lg text-white truncate">{heroTrack.title}</h3>
-                          <p className="text-text-secondary text-sm truncate">{heroTrack.artist_name}</p>
-                          <p className="text-text-muted text-[10px] mt-0.5 truncate">{heroTrack.album_title}</p>
-                        </motion.div>
-                      </AnimatePresence>
-                      <div className="flex items-center gap-3 mt-3">
-                        <button onClick={() => setLiked((l) => ({ ...l, [heroTrack.id]: !l[heroTrack.id] }))}
-                          className="transition-colors">
-                          <Heart className={`h-4 w-4 ${liked[heroTrack.id] ? "text-rose fill-rose" : "text-text-muted hover:text-rose"}`} />
-                        </button>
-                        <button onClick={() => setHeroTrackIdx((i) => (i + 1) % Math.min(deezer.tracks.length, 5))}
-                          className="text-text-muted hover:text-white transition-colors">
-                          <SkipForward className="h-4 w-4" />
-                        </button>
-                        <Volume2 className="h-3.5 w-3.5 text-text-muted ml-auto" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Waveform */}
-                  <div className="mb-3">
-                    <Waveform bars={60} color="#818CF8" />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-text-muted font-mono mb-5">
-                    <span>1:42</span>
-                    <span>{formatDuration(heroTrack.duration)}</span>
-                  </div>
-
-                  {/* Track list */}
-                  <div className="space-y-1.5">
-                    {nextTracks.map((tr, i) => (
-                      <button key={tr.id} onClick={() => setHeroTrackIdx(deezer.tracks.findIndex((t) => t.id === tr.id))}
-                        className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-all group/track text-start">
-                        <img src={tr.album_cover} alt={tr.title} className="w-10 h-10 rounded-lg object-cover ring-1 ring-white/5" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white truncate">{tr.title}</p>
-                          <p className="text-[11px] text-text-muted truncate">{tr.artist_name}</p>
-                        </div>
-                        <Play className="h-3.5 w-3.5 text-text-muted group-hover/track:text-primary-light transition-colors" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* Skeleton */
-              <div className="glass-card rounded-3xl p-6 space-y-4 animate-pulse">
-                <div className="flex gap-4"><div className="w-28 h-28 rounded-2xl bg-white/5" /><div className="flex-1 space-y-3 py-2"><div className="h-5 w-3/4 bg-white/5 rounded" /><div className="h-3 w-1/2 bg-white/5 rounded" /></div></div>
-                <div className="h-10 bg-white/5 rounded" />
-                {[1, 2, 3].map((i) => <div key={i} className="flex gap-3 items-center"><div className="w-10 h-10 rounded-lg bg-white/5" /><div className="flex-1 space-y-1.5"><div className="h-3 w-2/3 bg-white/5 rounded" /><div className="h-2 w-1/3 bg-white/5 rounded" /></div></div>)}
-              </div>
-            )}
-          </MC>
-        </div>
-      </div>
-
-      {/* ═══════════════ TRENDING ARTISTS ═══════════════ */}
-      {deezer.artists.length > 0 && (
-        <div className="py-20">
-          <div className="max-w-7xl mx-auto px-6 md:px-12">
-            <MC>
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <p className="text-primary-light text-[10px] uppercase tracking-[0.2em] font-semibold mb-2">{t("trending_title")}</p>
-                  <h2 className="font-heading font-bold text-2xl md:text-3xl text-white">{t("artists_title")}</h2>
-                </div>
-                <Equalizer count={5} color="#818CF8" height={20} />
-              </div>
-            </MC>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {deezer.artists.map((artist, i) => (
-                <MC key={artist.id} delay={i * 0.04}>
-                  <div className="glass-card glass-card-hover rounded-2xl p-4 text-center group transition-all cursor-default">
-                    <div className="relative mx-auto w-20 h-20 mb-3">
-                      <img src={artist.picture || artist.picture_big} alt={artist.name}
-                        className="w-20 h-20 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-primary/30 transition-all shadow-lg" />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                        <Play className="h-2.5 w-2.5 text-white fill-white" />
-                      </div>
-                    </div>
-                    <p className="font-medium text-sm text-white truncate">{artist.name}</p>
-                    <p className="text-[10px] text-text-muted mt-0.5">{formatFans(artist.nb_fan)} fans</p>
-                  </div>
-                </MC>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
-      )}
 
-      {/* ═══════════════ TOP ALBUMS CAROUSEL ═══════════════ */}
-      {deezer.albums.length > 0 && (
-        <div className="py-16 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 md:px-12">
-            <MC>
-              <div className="flex items-center gap-3 mb-8">
-                <Music2 className="h-5 w-5 text-teal" />
-                <h2 className="font-heading font-bold text-xl md:text-2xl text-white">
-                  {lang === "fr" ? "Albums Tendance" : lang === "ar" ? "ألبومات رائجة" : "Trending Albums"}
-                </h2>
-              </div>
-            </MC>
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide -mx-2 px-2">
-              {deezer.albums.map((album, i) => (
-                <MC key={album.id} delay={i * 0.05}>
-                  <div className="flex-shrink-0 w-44 group cursor-default">
-                    <div className="relative overflow-hidden rounded-2xl mb-3 ring-1 ring-white/5 group-hover:ring-primary/20 transition-all">
-                      <img src={album.cover_big || album.cover} alt={album.title}
-                        className="w-44 h-44 object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                        <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                          <Play className="h-4 w-4 text-white fill-white" />
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-white truncate">{album.title}</p>
-                    <p className="text-[11px] text-text-muted truncate">{album.artist_name}</p>
-                  </div>
-                </MC>
+        {/* Right — 2 cols : pricing table */}
+        <Reveal delay={0.1} className="md:col-span-2">
+          <Card className="overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
+              <span className="text-[13px] text-t-primary font-medium">
+                {lang === "fr" ? "Grille tarifaire" : lang === "ar" ? "جدول الأسعار" : "Volume pricing"}
+              </span>
+              <span className="text-accent text-[11px] font-medium bg-accent-dim px-2 py-0.5 rounded">
+                {lang === "fr" ? "Jusqu'à -70%" : "Up to -70%"}
+              </span>
+            </div>
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b border-border text-t-muted">
+                  <th className="text-left font-normal px-5 py-2.5">{lang === "fr" ? "Quantité" : "Qty"}</th>
+                  <th className="text-right font-normal px-5 py-2.5">{lang === "fr" ? "Prix / lien" : "Price / link"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {TIERS.map((tier, i) => {
+                  const isLast = i === TIERS.length - 1;
+                  return (
+                    <tr key={i} className={`border-b border-border last:border-0 ${isLast ? "bg-green-dim" : "hover:bg-surface-2"} transition-colors`}>
+                      <td className="px-5 py-3 text-t-secondary">
+                        {tier.max ? `${tier.min} – ${tier.max}` : `${tier.min}+`}
+                      </td>
+                      <td className={`px-5 py-3 text-right tabular-nums font-medium ${isLast ? "text-green" : "text-t-primary"}`}>
+                        {tier.price}€
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+        </Reveal>
+      </section>
+
+      {/* ═══════════════ ARTISTS BAR ═══════════════ */}
+      {deezer.artists?.length > 0 && (
+        <Reveal>
+          <section className="pb-16 md:pb-20">
+            <p className="text-t-muted text-[11px] uppercase tracking-widest mb-4">
+              {lang === "fr" ? "Disponible sur Deezer Premium" : "Available on Deezer Premium"}
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {deezer.artists.slice(0, 10).map((artist) => (
+                <div key={artist.id} className="flex items-center gap-2.5 bg-surface border border-border rounded-lg px-3 py-2 shrink-0 hover:border-border-hover transition-colors">
+                  <img src={artist.picture} alt={artist.name} className="w-7 h-7 rounded-full object-cover" loading="lazy" />
+                  <span className="text-[12px] text-t-secondary whitespace-nowrap">{artist.name}</span>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
+          </section>
+        </Reveal>
       )}
 
-      {/* ═══════════════ FEATURES ═══════════════ */}
-      <div className="py-20">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <MC>
-            <div className="text-center mb-14">
-              <h2 className="font-heading font-bold text-3xl md:text-4xl gradient-text">{t("features_title")}</h2>
-              <p className="text-text-secondary text-sm mt-3 max-w-md mx-auto">{t("features_sub")}</p>
-            </div>
-          </MC>
+      {/* ═══════════════ PACKS ═══════════════ */}
+      <section id="packs" className="pb-16 md:pb-24">
+        <Reveal>
+          <h2 className="text-t-primary font-semibold text-[22px] mb-2">
+            {lang === "fr" ? "Choisir un pack" : lang === "ar" ? "اختر باقة" : "Choose a pack"}
+          </h2>
+          <p className="text-t-muted text-[13px] mb-8">
+            {lang === "fr" ? "Plus vous achetez, moins vous payez par lien." : "The more you buy, the less you pay per link."}
+          </p>
+        </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <MC key={i} delay={i * 0.1}>
-                <div className="glass-card glass-card-hover rounded-2xl p-8 h-full transition-all group relative overflow-hidden">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${f.bg} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  <div className="relative z-10">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.bg} border ${f.border} flex items-center justify-center mb-5`}>
-                      <f.icon className={`h-5 w-5 ${f.color}`} />
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          {packs.filter(p => p.id !== "custom").map((pack, i) => {
+            const name = t(pack.name_key);
+            const hasDiscount = pack.discount > 0;
+            return (
+              <Reveal key={pack.id} delay={i * 0.08}>
+                <Card highlighted={pack.highlighted} className="p-5 flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-t-primary font-medium text-[15px]">{name}</p>
+                      <p className="text-t-muted text-[12px] mt-0.5">
+                        {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : (pack.quantity > 1 ? "links" : "link")} · Deezer Premium
+                      </p>
                     </div>
-                    <h3 className="font-heading font-semibold text-lg text-white mb-2">{f.title}</h3>
-                    <p className="text-text-secondary text-sm leading-relaxed">{f.desc}</p>
+                    {hasDiscount && (
+                      <span className="text-green text-[11px] font-medium bg-green-dim px-2 py-0.5 rounded">-{pack.discount}%</span>
+                    )}
                   </div>
+
+                  {hasDiscount && (
+                    <p className="text-t-muted text-[12px] mb-2">{pack.unit_price.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}</p>
+                  )}
+
+                  <div className="mt-auto pt-4 flex items-end justify-between">
+                    <span className="text-t-primary font-semibold text-[28px] tabular-nums leading-none">{pack.price.toFixed(0)}€</span>
+                    <CTA onClick={() => navigate(`/checkout/${pack.id}`)} className="text-[13px] px-5 py-2.5">
+                      {lang === "fr" ? "Acheter" : "Buy"} <ArrowRight className="h-3.5 w-3.5" />
+                    </CTA>
+                  </div>
+                </Card>
+              </Reveal>
+            );
+          })}
+
+          {/* Custom */}
+          <Reveal delay={0.16}>
+            <Card className="p-5 flex flex-col h-full">
+              <div className="mb-3">
+                <p className="text-t-primary font-medium text-[15px]">{lang === "fr" ? "Sur mesure" : "Custom"}</p>
+                <p className="text-t-muted text-[12px] mt-0.5">{lang === "fr" ? "Choisis la quantité exacte" : "Pick your exact quantity"}</p>
+              </div>
+
+              <div className="my-4">
+                <div className="flex items-baseline justify-between mb-3">
+                  <span className="text-t-muted text-[12px]">{lang === "fr" ? "Liens" : "Links"}</span>
+                  <span className="text-accent font-semibold text-[22px] tabular-nums">{customQty}</span>
                 </div>
-              </MC>
-            ))}
-          </div>
+                <Slider value={[customQty]} min={1} max={1000} step={1} onValueChange={([v]) => setCustomQty(v)} />
+                <div className="flex justify-between text-[10px] text-t-muted mt-1.5 tabular-nums"><span>1</span><span>1000</span></div>
+              </div>
+
+              {pricing && (
+                <div className="flex items-center justify-between text-[12px] mb-2">
+                  <span className="text-t-muted">{pricing.unit_price?.toFixed(2)}€ / {lang === "fr" ? "lien" : "link"}</span>
+                  {pricing.savings > 0 && <span className="text-green font-medium">-{pricing.savings?.toFixed(0)}€ {lang === "fr" ? "d'économie" : "saved"}</span>}
+                </div>
+              )}
+
+              <div className="mt-auto pt-4 flex items-end justify-between">
+                <span className="text-t-primary font-semibold text-[28px] tabular-nums leading-none">
+                  {pricing ? `${pricing.total?.toFixed(0)}€` : "—"}
+                </span>
+                <CTA onClick={() => navigate(`/checkout/custom?qty=${customQty}`)} className="text-[13px] px-5 py-2.5">
+                  {lang === "fr" ? "Acheter" : "Buy"} <ArrowRight className="h-3.5 w-3.5" />
+                </CTA>
+              </div>
+            </Card>
+          </Reveal>
         </div>
-      </div>
+
+        {/* Crypto payment note */}
+        <Reveal delay={0.2}>
+          <div className="flex flex-wrap items-center justify-between bg-surface border border-border rounded-xl px-5 py-4">
+            <div className="flex items-center gap-3 text-[13px] text-t-secondary">
+              <Shield className="h-4 w-4 text-t-muted shrink-0" />
+              {lang === "fr" ? "Paiement sécurisé via" : "Secure payment via"} <span className="text-t-primary font-medium">OxaPay</span>
+            </div>
+            <div className="flex items-center gap-3 text-[12px] text-t-muted font-mono">
+              <span>BTC</span><span>ETH</span><span>USDT</span><span>LTC</span>
+            </div>
+          </div>
+        </Reveal>
+      </section>
 
       {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-      <div className="py-20">
-        <div className="max-w-5xl mx-auto px-6 md:px-12">
-          <MC>
-            <p className="text-primary-light text-[10px] uppercase tracking-[0.2em] font-semibold text-center mb-2">{t("how_overline")}</p>
-            <h2 className="font-heading font-bold text-3xl text-center mb-12 gradient-text">{t("how_title")}</h2>
-          </MC>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { num: "01", title: t("how_step1_title"), desc: t("how_step1_desc"), icon: Music2, color: "text-primary-light" },
-              { num: "02", title: t("how_step2_title"), desc: t("how_step2_desc"), icon: Shield, color: "text-teal" },
-              { num: "03", title: t("how_step3_title"), desc: t("how_step3_desc"), icon: Zap, color: "text-emerald" },
-            ].map((step, i) => (
-              <MC key={i} delay={i * 0.1}>
-                <div className="relative">
-                  <span className="font-heading font-extrabold text-5xl text-white/[0.03] absolute -top-6 -left-2">{step.num}</span>
-                  <div className="relative z-10 glass-card rounded-2xl p-6">
-                    <step.icon className={`h-6 w-6 ${step.color} mb-4`} />
-                    <h3 className="font-heading font-semibold text-base text-white mb-2">{step.title}</h3>
-                    <p className="text-text-secondary text-sm leading-relaxed">{step.desc}</p>
-                  </div>
-                  {i < 2 && <ChevronRight className="hidden md:block absolute top-1/2 -right-5 h-5 w-5 text-text-muted/30" />}
+      <section className="pb-16 md:pb-24">
+        <Reveal>
+          <h2 className="text-t-primary font-semibold text-[22px] mb-8">{t("how_title")}</h2>
+        </Reveal>
+        <div className="grid md:grid-cols-3 gap-5">
+          {[
+            { num: "01", title: t("how_step1_title"), desc: t("how_step1_desc"), icon: Check },
+            { num: "02", title: t("how_step2_title"), desc: t("how_step2_desc"), icon: Shield },
+            { num: "03", title: t("how_step3_title"), desc: t("how_step3_desc"), icon: Zap },
+          ].map((step, i) => (
+            <Reveal key={i} delay={i * 0.08}>
+              <Card className="p-5 h-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-accent text-[11px] font-medium bg-accent-dim w-8 h-8 rounded-lg flex items-center justify-center">{step.num}</span>
+                  <p className="text-t-primary font-medium text-[14px]">{step.title}</p>
                 </div>
-              </MC>
+                <p className="text-t-secondary text-[13px] leading-relaxed">{step.desc}</p>
+              </Card>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════ SOCIAL PROOF ═══════════════ */}
+      <Reveal>
+        <section className="pb-16 md:pb-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { value: ordersDelivered > 0 ? ordersDelivered.toLocaleString() : "500+", label: lang === "fr" ? "Commandes" : "Orders" },
+              { value: stats?.links > 0 ? stats.links.toLocaleString() : "2,000+", label: lang === "fr" ? "Liens livrés" : "Links delivered" },
+              { value: "< 1min", label: lang === "fr" ? "Temps de livraison" : "Delivery time" },
+              { value: "30j", label: lang === "fr" ? "Garantie" : "Guarantee" },
+            ].map((stat, i) => (
+              <Card key={i} className="p-5 text-center">
+                <p className="text-t-primary font-semibold text-[22px] tabular-nums">{stat.value}</p>
+                <p className="text-t-muted text-[11px] mt-1">{stat.label}</p>
+              </Card>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* ═══════════════ STATS ═══════════════ */}
-      <div className="py-20">
-        <div className="max-w-4xl mx-auto px-6 md:px-12">
-          <div className="glass-card rounded-3xl p-10 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-teal/5" />
-            <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              {[
-                { label: t("stats_users"), val: stats.users || "1K+", icon: Users, color: "text-primary-light" },
-                { label: t("stats_links"), val: stats.links || "5K+", icon: Music2, color: "text-teal" },
-                { label: t("stats_orders"), val: stats.orders || "2K+", icon: Star, color: "text-accent-light" },
-                { label: t("stats_delivery"), val: "< 1min", icon: Clock, color: "text-emerald" },
-              ].map((s, i) => (
-                <MC key={i} delay={i * 0.08}>
-                  <div>
-                    <s.icon className={`h-5 w-5 ${s.color} mx-auto mb-2`} />
-                    <p className={`font-heading font-extrabold text-2xl md:text-3xl ${s.color}`}>{s.val}</p>
-                    <p className="text-text-muted text-[10px] mt-1.5 uppercase tracking-wider">{s.label}</p>
-                  </div>
-                </MC>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════ PRICING PREVIEW ═══════════════ */}
-      <div className="py-16">
-        <div className="max-w-5xl mx-auto px-6 md:px-12">
-          <MC>
-            <div className="glass-card rounded-3xl p-8 md:p-10">
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="flex-1">
-                  <Award className="h-6 w-6 text-teal mb-3" />
-                  <h3 className="font-heading font-bold text-xl md:text-2xl text-white mb-2">
-                    {lang === "fr" ? "Prix degressifs" : "Volume Pricing"}
-                  </h3>
-                  <p className="text-text-secondary text-sm mb-4">
-                    {lang === "fr" ? "Plus vous achetez, moins vous payez. Jusqu'a 70% d'economie." : "The more you buy, the less you pay. Up to 70% savings."}
-                  </p>
-                  <Link to="/offers">
-                    <Button className="btn-teal rounded-xl px-6 py-3 text-sm font-semibold gap-2">
-                      {t("hero_cta")} <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-                <div className="grid grid-cols-3 gap-2 flex-shrink-0">
-                  {[
-                    { range: "1-9", price: "5.00€" },
-                    { range: "10-49", price: "3.50€" },
-                    { range: "50-99", price: "3.00€" },
-                    { range: "100+", price: "2.00€" },
-                    { range: "250+", price: "1.80€" },
-                    { range: "500+", price: "1.50€", highlight: true },
-                  ].map((t, i) => (
-                    <div key={i} className={`rounded-xl px-4 py-3 text-center ${t.highlight ? "bg-teal/10 border border-teal/20" : "glass-card"}`}>
-                      <p className="text-text-muted text-[10px]">{t.range}</p>
-                      <p className={`font-heading font-bold text-sm ${t.highlight ? "text-teal" : "text-white"}`}>{t.price}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </MC>
-        </div>
-      </div>
+        </section>
+      </Reveal>
 
       {/* ═══════════════ FAQ ═══════════════ */}
-      <div className="py-20" id="faq">
-        <div className="max-w-2xl mx-auto px-6 md:px-12">
-          <MC>
-            <h2 className="font-heading font-bold text-3xl text-center mb-10 gradient-text">FAQ</h2>
-          </MC>
-          <div className="space-y-3">
+      <section className="pb-16 md:pb-24">
+        <Reveal>
+          <h2 className="text-t-primary font-semibold text-[22px] mb-6">FAQ</h2>
+        </Reveal>
+        <Reveal delay={0.05}>
+          <div className="bg-surface border border-border rounded-xl divide-y divide-border overflow-hidden">
             {faqs.map((faq, i) => (
-              <MC key={i} delay={i * 0.05}>
-                <div className="glass-card rounded-xl overflow-hidden">
-                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full px-6 py-4 flex items-center justify-between text-start">
-                    <span className="text-sm font-medium text-white">{faq.q}</span>
-                    {openFaq === i ? <ChevronUp className="h-4 w-4 text-text-muted flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-text-muted flex-shrink-0" />}
-                  </button>
-                  {openFaq === i && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="px-6 pb-4">
-                      <p className="text-text-secondary text-sm leading-relaxed">{faq.a}</p>
-                    </motion.div>
-                  )}
-                </div>
-              </MC>
+              <div key={i}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface-2 transition-colors">
+                  <span className="text-t-primary text-[14px] font-medium pr-4">{faq.q}</span>
+                  <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="h-4 w-4 text-t-muted shrink-0" />
+                  </motion.div>
+                </button>
+                <motion.div
+                  initial={false}
+                  animate={{ height: openFaq === i ? "auto" : 0, opacity: openFaq === i ? 1 : 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden">
+                  <div className="px-5 pb-4">
+                    <p className="text-t-secondary text-[13px] leading-relaxed">{faq.a}</p>
+                  </div>
+                </motion.div>
+              </div>
             ))}
           </div>
-        </div>
-      </div>
+        </Reveal>
+      </section>
 
-      {/* ═══════════════ CTA ═══════════════ */}
-      <div className="py-20">
-        <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
-          <MC>
-            <div className="glass-card rounded-3xl p-12 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.08] via-transparent to-accent/[0.06]" />
-              <div className="relative z-10">
-                <Sparkles className="h-8 w-8 text-primary-light mx-auto mb-4" />
-                <h2 className="font-heading font-bold text-3xl md:text-4xl mb-3">{t("cta_title")}</h2>
-                <p className="text-text-secondary text-sm mb-8 max-w-md mx-auto">{t("cta_subtitle")}</p>
-                <Link to="/offers">
-                  <Button size="lg" className="btn-primary rounded-xl px-8 py-5 text-sm font-semibold gap-2" data-testid="cta-btn">
-                    <Play className="h-4 w-4 fill-current" /> {t("hero_cta")} <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+      {/* ═══════════════ BOTTOM CTA ═══════════════ */}
+      <Reveal>
+        <section className="pb-16 md:pb-20">
+          <div className="bg-surface border border-border rounded-xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-t-primary font-semibold text-[18px] mb-1">{t("cta_title")}</h3>
+              <p className="text-t-secondary text-[13px]">{t("cta_subtitle")}</p>
             </div>
-          </MC>
-        </div>
-      </div>
-    </section>
+            <CTA onClick={scrollToPacks} className="text-[14px] px-7 py-3.5 shrink-0">
+              {t("hero_cta")} <ArrowRight className="h-4 w-4" />
+            </CTA>
+          </div>
+        </section>
+      </Reveal>
+    </div>
   );
 }

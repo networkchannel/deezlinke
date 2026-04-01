@@ -545,6 +545,16 @@ def get_client_ip(request: Request) -> str:
 
 # ==================== DEEZER API PROXY ====================
 
+@api_router.get("/stats/public")
+async def public_stats():
+    """Public-facing stats for landing page social proof"""
+    orders_count = await db.orders.count_documents({"status": "completed"})
+    links_count = await db.links.count_documents({"status": "sold"})
+    return {
+        "orders": orders_count,
+        "links": links_count,
+    }
+
 # In-memory cache for Deezer data (5 min TTL)
 _deezer_cache: dict = {}
 

@@ -1,15 +1,1 @@
-/* DeezLink Custom Styles — Apple Liquid Glass */
-
-/* Legacy alias kept for backward compat */
-.btn-lime {
-  background: linear-gradient(135deg, #6366F1, #818CF8) !important;
-  color: #FFFFFF !important;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none !important;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-}
-.btn-lime:hover {
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.45);
-  transform: translateY(-1px);
-}
+/* intentionally empty — all styles via Tailwind + index.css */
