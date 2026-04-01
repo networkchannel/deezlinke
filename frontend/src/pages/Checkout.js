@@ -41,7 +41,8 @@ export default function Checkout() {
       }).catch(() => navigate("/"));
     } else {
       axios.get(`${API}/packs`).then((r) => {
-        const found = r.data.packs.find((p) => p.id === packId);
+        const allPacks = r.data.packs || r.data;
+        const found = Array.isArray(allPacks) ? allPacks.find((p) => p.id === packId) : null;
         if (found) setPack(found);
         else navigate("/");
       }).catch(() => navigate("/"));
@@ -87,7 +88,7 @@ export default function Checkout() {
     : ((5 - pack.unit_price) * pack.quantity).toFixed(2);
   const packLabel = isCustom
     ? (lang === "fr" ? "Pack Personnalise" : lang === "ar" ? "\u0628\u0627\u0642\u0629 \u0645\u062e\u0635\u0635\u0629" : "Custom Pack")
-    : t(pack.name_key);
+    : t(pack.name_key || "pack_single");
 
   return (
     <div className="min-h-screen flex items-center justify-center py-24 relative" data-testid="checkout-page">

@@ -77,15 +77,15 @@ export default function Offers() {
                   <div className={`w-12 h-12 rounded-xl ${color.bg} border ${color.border} flex items-center justify-center`}>
                     <Icon className={`h-5 w-5 ${color.text}`} />
                   </div>
-                  {pack.popular && (
+                  {pack.highlighted && (
                     <Badge className="bg-teal/10 text-teal border-teal/20 text-[10px] font-semibold gap-1">
                       <Star className="h-2.5 w-2.5" /> {t("offers_popular")}
                     </Badge>
                   )}
                 </div>
 
-                <h3 className="font-heading font-bold text-xl mb-1">{pack.name}</h3>
-                <p className="text-text-secondary text-sm mb-6">{pack.description}</p>
+                <h3 className="font-heading font-bold text-xl mb-1">{t(pack.name_key)}</h3>
+                <p className="text-text-secondary text-sm mb-6">{t(pack.name_key + "_desc")}</p>
 
                 <div className="mt-auto flex items-end justify-between">
                   <div>

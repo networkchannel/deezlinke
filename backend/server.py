@@ -543,6 +543,68 @@ def get_client_ip(request: Request) -> str:
     # Fallback to direct connection
     return request.client.host if request.client else "127.0.0.1"
 
+# ==================== DEEZER API PROXY ====================
+
+# In-memory cache for Deezer data (5 min TTL)
+_deezer_cache: dict = {}
+
+@api_router.get("/deezer/trending")
+async def deezer_trending():
+    """Fetch trending tracks and artists from Deezer public API"""
+    import time as _time
+    cache_key = "trending_global"
+    cached = _deezer_cache.get(cache_key)
+    if cached and _time.time() - cached["ts"] < 300:
+        return cached["data"]
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as http_client:
+            # Fetch chart tracks
+            tracks_resp = await http_client.get("https://api.deezer.com/chart/0/tracks?limit=10")
+            artists_resp = await http_client.get("https://api.deezer.com/chart/0/artists?limit=12")
+            albums_resp = await http_client.get("https://api.deezer.com/chart/0/albums?limit=8")
+
+            tracks_data = tracks_resp.json().get("data", []) if tracks_resp.status_code == 200 else []
+            artists_data = artists_resp.json().get("data", []) if artists_resp.status_code == 200 else []
+            albums_data = albums_resp.json().get("data", []) if albums_resp.status_code == 200 else []
+
+            result = {
+                "tracks": [{
+                    "id": t.get("id"),
+                    "title": t.get("title"),
+                    "duration": t.get("duration"),
+                    "preview": t.get("preview"),
+                    "position": t.get("position"),
+                    "artist_name": t.get("artist", {}).get("name"),
+                    "artist_picture": t.get("artist", {}).get("picture_medium"),
+                    "album_title": t.get("album", {}).get("title"),
+                    "album_cover": t.get("album", {}).get("cover_medium"),
+                    "album_cover_big": t.get("album", {}).get("cover_big"),
+                } for t in tracks_data],
+                "artists": [{
+                    "id": a.get("id"),
+                    "name": a.get("name"),
+                    "picture": a.get("picture_medium"),
+                    "picture_big": a.get("picture_big"),
+                    "picture_xl": a.get("picture_xl"),
+                    "nb_fan": a.get("nb_fan", 0),
+                    "position": a.get("position"),
+                } for a in artists_data],
+                "albums": [{
+                    "id": al.get("id"),
+                    "title": al.get("title"),
+                    "cover": al.get("cover_medium"),
+                    "cover_big": al.get("cover_big"),
+                    "artist_name": al.get("artist", {}).get("name"),
+                } for al in albums_data],
+            }
+            _deezer_cache[cache_key] = {"data": result, "ts": _time.time()}
+            return result
+    except Exception as e:
+        logger.error(f"Deezer API error: {e}")
+        return {"tracks": [], "artists": [], "albums": []}
+
+
 # ==================== ROUTES WITH ANTI-ABUSE PROTECTION ====================
 
 # --- Auth Routes ---
