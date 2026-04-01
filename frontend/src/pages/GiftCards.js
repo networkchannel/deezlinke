@@ -17,121 +17,103 @@ function EditableGiftCard3D({
   loading 
 }) {
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto px-4">
+      {/* Carte 3D */}
       <motion.div
-        className="glass backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10"
-        whileHover={{ y: -4 }}
-        transition={{ duration: 0.3 }}>
-        
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
-            <Gift className="h-6 w-6 text-white" />
+        className="relative mb-8"
+        style={{ perspective: "1500px" }}
+        whileHover={{ rotateY: 2, rotateX: -2 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+        <div 
+          className="relative bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-2xl p-6 sm:p-10 shadow-2xl shadow-accent-glow/50"
+          style={{ transformStyle: "preserve-3d", aspectRatio: "1.6" }}>
+          
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10 rounded-2xl overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl" />
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-t-primary">Carte Cadeau DeezLink</h3>
-            <p className="text-xs text-t-muted">Offrez Deezer Premium</p>
-          </div>
-        </div>
 
-        {/* Form Fields */}
-        <div className="space-y-5 mb-6">
-          {/* Montant */}
-          <div>
-            <label className="block text-sm font-medium text-t-primary mb-2">
-              Montant
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                min="5"
-                max="500"
-                className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary text-2xl font-bold rounded-xl px-4 py-3 pr-12 focus:border-accent focus:outline-none transition-all"
-                placeholder="50"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-t-muted">€</span>
+          {/* Content */}
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <Gift className="h-10 w-10 sm:h-12 sm:w-12 text-white drop-shadow-lg" />
+              <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-white/80" />
             </div>
-            <p className="text-xs text-t-muted mt-1">Min 5€ • Max 500€</p>
-          </div>
 
-          {/* Destinataire */}
-          <div>
-            <label className="block text-sm font-medium text-t-primary mb-2">
-              Pour (optionnel)
-            </label>
-            <input
-              type="text"
-              value={recipientName}
-              onChange={(e) => setRecipientName(e.target.value)}
-              placeholder="Nom du destinataire"
-              className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary rounded-xl px-4 py-3 focus:border-accent focus:outline-none transition-all"
-            />
-          </div>
-
-          {/* Message */}
-          <div>
-            <label className="block text-sm font-medium text-t-primary mb-2">
-              Message personnel (optionnel)
-            </label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Joyeux anniversaire ! Profite de la musique..."
-              maxLength={200}
-              rows={4}
-              className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary rounded-xl px-4 py-3 focus:border-accent focus:outline-none transition-all resize-none"
-            />
-            <p className="text-xs text-t-muted mt-1 text-right">{message.length}/200</p>
-          </div>
-        </div>
-
-        {/* Preview Card */}
-        {(amount > 0 || recipientName || message) && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mb-6">
-            <p className="text-xs text-t-muted mb-3">Aperçu :</p>
-            <div className="bg-gradient-to-br from-accent/20 to-secondary/20 rounded-xl p-6 border border-accent/20">
-              <div className="flex items-center justify-between mb-4">
-                <Sparkles className="h-8 w-8 text-accent" />
-                <span className="text-3xl font-bold text-accent">{amount > 0 ? `${amount}€` : "—"}</span>
+            {/* Infos éditables */}
+            <div className="space-y-3 sm:space-y-4">
+              <p className="text-white/70 text-xs sm:text-sm font-medium">Carte Cadeau DeezLink</p>
+              
+              {/* Montant éditable */}
+              <div className="flex items-baseline gap-2">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  min="5"
+                  max="500"
+                  className="bg-white/20 border-2 border-white/30 text-white text-4xl sm:text-5xl font-bold rounded-lg px-3 py-2 w-32 sm:w-40 tabular-nums backdrop-blur-sm focus:border-white/60 focus:outline-none"
+                  placeholder="50"
+                />
+                <span className="text-4xl sm:text-5xl font-bold text-white">€</span>
               </div>
-              {recipientName && (
-                <p className="text-sm text-t-primary font-medium mb-2">Pour {recipientName}</p>
-              )}
-              {message && (
-                <p className="text-xs text-t-muted italic">"{message}"</p>
-              )}
-            </div>
-          </motion.div>
-        )}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-6 border-t border-white/10">
-          <p className="text-xs text-t-muted">Valable 12 mois</p>
-          <motion.button
-            onClick={onValidate}
-            disabled={loading || !amount || amount < 5}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 bg-gradient-to-r from-accent to-secondary hover:opacity-90 text-white font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg">
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Création...
-              </>
-            ) : (
-              <>
-                <Check className="h-5 w-5" />
-                Créer la carte cadeau
-              </>
-            )}
-          </motion.button>
+              {/* Destinataire */}
+              <div>
+                <label className="text-white/60 text-xs mb-1 block">Pour</label>
+                <input
+                  type="text"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Nom du destinataire"
+                  className="w-full bg-white/20 border border-white/30 text-white rounded-lg px-3 py-2 text-sm sm:text-base backdrop-blur-sm placeholder:text-white/40 focus:border-white/60 focus:outline-none"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="text-white/60 text-xs mb-1 block">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Votre message..."
+                  maxLength={150}
+                  rows={2}
+                  className="w-full bg-white/20 border border-white/30 text-white rounded-lg px-3 py-2 text-xs sm:text-sm backdrop-blur-sm placeholder:text-white/40 focus:border-white/60 focus:outline-none resize-none"
+                />
+                <p className="text-white/50 text-[10px] mt-1 text-right">{message.length}/150</p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <p className="text-white/60 text-[10px] sm:text-xs">Valable 12 mois • Deezer Premium</p>
+          </div>
         </div>
       </motion.div>
+
+      {/* Bouton Valider ESPACÉ */}
+      <div className="flex justify-center">
+        <motion.button
+          onClick={onValidate}
+          disabled={loading || !amount || amount < 5}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-8 py-4 bg-white text-accent font-bold text-lg rounded-xl hover:bg-white/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3 shadow-2xl">
+          {loading ? (
+            <>
+              <div className="w-6 h-6 border-3 border-accent border-t-transparent rounded-full animate-spin" />
+              Création en cours...
+            </>
+          ) : (
+            <>
+              <Check className="h-6 w-6" />
+              Créer la carte cadeau
+            </>
+          )}
+        </motion.button>
+      </div>
     </div>
   );
 }

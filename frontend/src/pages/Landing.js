@@ -303,43 +303,47 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          {/* Mobile: Grille verticale */}
-          <div className="md:hidden grid grid-cols-1 gap-4 px-4 mb-6">
-            {packs.filter((p) => p.id !== "custom").map((pack, i) => {
-              const name = t(pack.name_key);
-              const isPopular = pack.highlighted;
-              return (
-                <Reveal key={pack.id} delay={i * 0.08}>
-                  <GlassCard glow={isPopular} className="p-6 relative text-center flex flex-col">
-                    {isPopular && (
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-secondary text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                        POPULAIRE
+          {/* Mobile: Scroll Horizontal */}
+          <div className="md:hidden overflow-x-auto pb-8 mb-6 scrollbar-hide">
+            <div className="flex gap-4 px-4">
+              {packs.filter((p) => p.id !== "custom").map((pack, i) => {
+                const name = t(pack.name_key);
+                const isPopular = pack.highlighted;
+                return (
+                  <Reveal key={pack.id} delay={i * 0.08}>
+                    <GlassCard glow={isPopular} className="p-6 relative text-center w-72 shrink-0 flex flex-col min-h-[400px]">
+                      {isPopular && (
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-secondary text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg z-10">
+                          POPULAIRE
+                        </div>
+                      )}
+                      <div className="flex items-center justify-center mb-4 mt-4">
+                        <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
+                          {pack.id === "solo" && <User className="h-6 w-6 text-accent" />}
+                          {pack.id === "duo" && <Users className="h-6 w-6 text-accent" />}
+                          {pack.id === "family" && <Users className="h-6 w-6 text-accent" />}
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
-                        {pack.id === "solo" && <User className="h-6 w-6 text-accent" />}
-                        {pack.id === "duo" && <Users className="h-6 w-6 text-accent" />}
-                        {pack.id === "family" && <Users className="h-6 w-6 text-accent" />}
+                      <h3 className="text-lg font-bold text-t-primary mb-1">{name}</h3>
+                      <p className="text-xs text-t-muted mb-4">
+                        {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
+                      </p>
+                      <div className="flex-1 flex items-center justify-center mb-6">
+                        <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums">
+                          {pack.price.toFixed(0)}€
+                        </p>
                       </div>
-                    </div>
-                    <h3 className="text-lg font-bold text-t-primary mb-1">{name}</h3>
-                    <p className="text-xs text-t-muted mb-4">
-                      {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
-                    </p>
-                    <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums mb-6">
-                      {pack.price.toFixed(0)}€
-                    </p>
-                    <motion.button
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate(`/checkout/${pack.id}`)}
-                      className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg">
-                      {lang === "fr" ? "Choisir" : "Choose"}
-                    </motion.button>
-                  </GlassCard>
-                </Reveal>
-              );
-            })}
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate(`/checkout/${pack.id}`)}
+                        className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg mt-auto">
+                        {lang === "fr" ? "Choisir" : "Choose"}
+                      </motion.button>
+                    </GlassCard>
+                  </Reveal>
+                );
+              })}
+            </div>
           </div>
 
           {/* Desktop: Grille simple 3 colonnes */}
