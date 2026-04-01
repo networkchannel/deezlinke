@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart } from "lucide-react";
+import { Globe, Menu, X, ShoppingCart, User, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -57,9 +57,36 @@ export default function Header() {
                 {t("nav_history")}
               </Link>
             )}
+          <Link to="/gift-cards" className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${active("/gift-cards") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            <Gift className="h-4 w-4" />
+            {i18n.language === "fr" ? "Carte Cadeau" : "Gift Card"}
+          </Link>
+
             {isAdmin && user && user.role === "admin" && (
               <Link to="/admin" className={`text-sm font-medium transition-colors ${active("/admin") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
                 Admin
+          {/* Profile Icon */}
+          {!user ? (
+            <Link to="/login" className="hidden sm:block">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-8 h-8 rounded-full glass flex items-center justify-center text-t-secondary hover:text-t-primary transition-colors">
+                <User className="h-4 w-4" />
+              </motion.div>
+            </Link>
+          ) : user.role !== "admin" ? (
+            <Link to="/profile" className="hidden sm:block">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent hover:bg-accent/30 transition-colors">
+                <User className="h-4 w-4" />
+              </motion.div>
+            </Link>
+          ) : null}
+
+
               </Link>
             )}
           </nav>

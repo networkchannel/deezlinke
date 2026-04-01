@@ -1,14 +1,63 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
+import { X, Trash2, Plus, Minus, ShoppingBag, Gift, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import axios from "axios";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function CartSlidePanel({ isOpen, onClose }) {
   const { cart, removeFromCart, updateQuantity, getTotal, getTotalItems } = useCart();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const lang = i18n.language || "fr";
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [giftCardApplied, setGiftCardApplied] = useState(null);
+  const [giftCardError, setGiftCardError] = useState("");
+  const [validating, setValidating] = useState(false);
+
+  const handleApplyGiftCard = async () => {
+    if (!giftCardCode.trim()) return;
+    
+    setValidating(true);
+    setGiftCardError("");
+    
+    try {
+      const response = await axios.post(`${API}/gift-cards/validate`, {
+        code: giftCardCode.trim().toUpperCase(),
+      });
+      
+      if (response.data.valid) {
+        setGiftCardApplied({
+          code: giftCardCode.trim().toUpperCase(),
+          balance: response.data.balance,
+        });
+        setGiftCardCode("");
+      } else {
+        setGiftCardError(response.data.error || "Code invalide");
+      }
+    } catch (error) {
+      setGiftCardError(error.response?.data?.detail || "Erreur de validation");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const getFinalTotal = () => {
+    const total = getTotal();
+    if (giftCardApplied) {
+      const discount = Math.min(giftCardApplied.balance, total);
+      return total - discount;
+    }
+    return total;
+  };
+
+  const getGiftCardDiscount = () => {
+    if (!giftCardApplied) return 0;
+    return Math.min(giftCardApplied.balance, getTotal());
+  };
 
   const handleCheckout = () => {
     if (cart.length === 1) {
@@ -139,12 +188,69 @@ export default function CartSlidePanel({ isOpen, onClose }) {
             {/* Footer */}
             {cart.length > 0 && (
               <div className="border-t border-border p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-t-primary">Total</span>
-                  <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
-                    {getTotal().toFixed(0)}€
-                  </span>
+                {/* Gift Card Input */}
+                <div>
+                  <label className="text-xs text-t-muted mb-2 block">
+                    {lang === "fr" ? "Code carte cadeau" : "Gift card code"}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={giftCardCode}
+                      onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                      placeholder="DEEZ-XXXX-XXXX-XXXX"
+                      disabled={giftCardApplied}
+                      className="flex-1 bg-bg/50 border border-border text-t-primary rounded-lg px-3 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent/20 disabled:opacity-50"
+                    />
+                    {!giftCardApplied ? (
+                      <button
+                        onClick={handleApplyGiftCard}
+                        disabled={validating || !giftCardCode.trim()}
+                        className="px-4 py-2 bg-accent/20 hover:bg-accent/30 text-accent rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-1">
+                        {validating ? (
+                          <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Gift className="h-4 w-4" />
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setGiftCardApplied(null)}
+                        className="px-4 py-2 bg-green-dim text-green rounded-lg text-sm font-medium flex items-center gap-1">
+                        <Check className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {giftCardError && (
+                    <p className="text-xs text-red-400 mt-1">{giftCardError}</p>
+                  )}
+                  {giftCardApplied && (
+                    <p className="text-xs text-green mt-1">
+                      ✓ -{getGiftCardDiscount().toFixed(0)}€ appliqués
+                    </p>
+                  )}
                 </div>
+
+                {/* Totals */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-t-muted">Sous-total</span>
+                    <span className="text-t-primary tabular-nums">{getTotal().toFixed(0)}€</span>
+                  </div>
+                  {giftCardApplied && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-green">Carte cadeau</span>
+                      <span className="text-green tabular-nums">-{getGiftCardDiscount().toFixed(0)}€</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-base font-semibold text-t-primary">Total</span>
+                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
+                      {getFinalTotal().toFixed(0)}€
+                    </span>
+                  </div>
+                </div>
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
