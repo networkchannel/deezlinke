@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart, User, Gift } from "lucide-react";
+import { Globe, Menu, X, ShoppingCart, User, Gift, Home, Tag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -46,12 +46,14 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className={`text-sm font-medium transition-colors ${active("/") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-              {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
-            </Link>
-            <Link to="/offers" className={`text-sm font-medium transition-colors ${active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
-              {t("nav_offers")}
-            </Link>
+          <Link to="/" className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${active("/") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            <Home className="h-4 w-4" />
+            {t("nav_home") || (i18n.language === "fr" ? "Accueil" : "Home")}
+          </Link>
+          <Link to="/offers" className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${active("/offers") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
+            <Tag className="h-4 w-4" />
+            {t("nav_offers")}
+          </Link>
             {user && user.role !== "admin" && (
               <Link to="/history" className={`text-sm font-medium transition-colors ${active("/history") ? "text-t-primary" : "text-t-secondary hover:text-t-primary"}`}>
                 {t("nav_history")}

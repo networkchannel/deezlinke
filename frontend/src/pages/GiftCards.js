@@ -1,61 +1,155 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
-import { Gift, Check, AlertCircle, Sparkles } from "lucide-react";
+import { Gift, Check, AlertCircle, Sparkles, Edit3, X } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-function GiftCard3D({ amount, recipientName, message }) {
+function EditableGiftCard3D({ 
+  amount, 
+  setAmount, 
+  recipientName, 
+  setRecipientName, 
+  message, 
+  setMessage,
+  onValidate,
+  loading 
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const lang = "fr";
+
   return (
     <motion.div
-      className="relative w-full max-w-md mx-auto"
-      style={{ perspective: "1000px" }}
-      whileHover={{ rotateY: 5, rotateX: -5 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-      <div className="relative bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-2xl p-8 shadow-2xl shadow-accent-glow transform-gpu"
+      className="relative w-full max-w-2xl mx-auto"
+      style={{ perspective: "1500px" }}
+      whileHover={{ rotateY: isEditing ? 0 : 3, rotateX: isEditing ? 0 : -3 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+      <div 
+        className="relative bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-3xl p-10 sm:p-12 shadow-2xl shadow-accent-glow transform-gpu"
         style={{ transformStyle: "preserve-3d" }}>
         
         {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl" />
+        <div className="absolute inset-0 opacity-10 rounded-3xl overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl" />
         </div>
+
+        {/* Edit Button */}
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all group z-20">
+            <Edit3 className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
+          </button>
+        )}
+
+        {isEditing && (
+          <button
+            onClick={() => setIsEditing(false)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all z-20">
+            <X className="h-5 w-5 text-white" />
+          </button>
+        )}
 
         {/* Content */}
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <Gift className="h-10 w-10 text-white" />
-            <Sparkles className="h-8 w-8 text-white/70" />
+          <div className="flex items-center justify-between mb-10">
+            <Gift className="h-12 w-12 text-white drop-shadow-lg" />
+            <Sparkles className="h-10 w-10 text-white/70" />
           </div>
 
-          <div className="mb-6">
-            <p className="text-white/80 text-sm mb-2">Carte Cadeau DeezLink</p>
-            <p className="text-5xl font-bold text-white tabular-nums">
-              {amount > 0 ? `${amount.toFixed(0)}€` : "—"}
-            </p>
+          <div className="mb-8">
+            <p className="text-white/80 text-sm mb-3 font-medium">Carte Cadeau DeezLink</p>
+            {isEditing ? (
+              <div className="relative">
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  min="5"
+                  max="500"
+                  className="text-6xl font-bold text-white bg-white/10 border-2 border-white/30 rounded-xl px-4 py-2 w-40 tabular-nums backdrop-blur-sm focus:border-white/50 focus:outline-none"
+                />
+                <span className="text-6xl font-bold text-white ml-2">€</span>
+              </div>
+            ) : (
+              <p className="text-6xl font-bold text-white tabular-nums drop-shadow-lg">
+                {amount > 0 ? `${amount.toFixed(0)}€` : "—"}
+              </p>
+            )}
           </div>
 
-          {recipientName && (
-            <div className="mb-4">
-              <p className="text-white/60 text-xs mb-1">Pour</p>
-              <p className="text-white font-semibold text-lg">{recipientName}</p>
+          {isEditing ? (
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-white/70 text-xs mb-2 block font-medium">Pour</label>
+                <input
+                  type="text"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Nom du destinataire"
+                  className="w-full bg-white/10 border-2 border-white/30 text-white rounded-xl px-4 py-3 text-lg font-semibold backdrop-blur-sm placeholder:text-white/40 focus:border-white/50 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-white/70 text-xs mb-2 block font-medium">Message</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Votre message personnel..."
+                  maxLength={200}
+                  rows={3}
+                  className="w-full bg-white/10 border-2 border-white/30 text-white rounded-xl px-4 py-3 text-sm backdrop-blur-sm placeholder:text-white/40 focus:border-white/50 focus:outline-none resize-none"
+                />
+                <p className="text-white/60 text-xs mt-1">{message.length}/200</p>
+              </div>
             </div>
+          ) : (
+            <>
+              {recipientName && (
+                <div className="mb-6">
+                  <p className="text-white/60 text-xs mb-1 font-medium">Pour</p>
+                  <p className="text-white font-bold text-2xl drop-shadow">{recipientName}</p>
+                </div>
+              )}
+
+              {message && (
+                <div className="glass backdrop-blur-md rounded-xl p-4 mb-6 border border-white/20">
+                  <p className="text-white/90 text-sm italic leading-relaxed">"{message}"</p>
+                </div>
+              )}
+            </>
           )}
 
-          {message && (
-            <div className="glass backdrop-blur-sm rounded-lg p-3 mt-4">
-              <p className="text-white/90 text-sm italic">"{message}"</p>
-            </div>
-          )}
-
-          <div className="mt-8 pt-4 border-t border-white/20">
-            <p className="text-white/60 text-xs">Valable 12 mois • Deezer Premium</p>
+          <div className="mt-8 pt-6 border-t border-white/30 flex items-center justify-between">
+            <p className="text-white/70 text-xs font-medium">Valable 12 mois • Deezer Premium</p>
+            {isEditing && (
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  onValidate();
+                }}
+                disabled={loading}
+                className="px-6 py-2.5 bg-white text-accent font-bold rounded-xl hover:bg-white/90 transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg">
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    {lang === "fr" ? "Création..." : "Creating..."}
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-5 w-5" />
+                    {lang === "fr" ? "Valider" : "Validate"}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
         {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-3xl opacity-0 hover:opacity-100 transition-opacity duration-700" />
       </div>
     </motion.div>
   );
@@ -74,10 +168,12 @@ export default function GiftCards() {
   const [error, setError] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
 
-  const predefinedAmounts = [25, 50, 100, 150, 200];
+  const handleValidate = async () => {
+    if (!purchaserEmail) {
+      setError(lang === "fr" ? "Veuillez renseigner votre email" : "Please enter your email");
+      return;
+    }
 
-  const handlePurchase = async (e) => {
-    e.preventDefault();
     setLoading(true);
     setError("");
     setSuccess(false);
@@ -94,10 +190,6 @@ export default function GiftCards() {
       if (response.data.success) {
         setGeneratedCode(response.data.gift_card.code);
         setSuccess(true);
-        // Reset form
-        setRecipientEmail("");
-        setRecipientName("");
-        setMessage("");
       }
     } catch (err) {
       setError(err.response?.data?.detail || "Une erreur est survenue");
@@ -111,7 +203,7 @@ export default function GiftCards() {
       <div className="orb-purple" style={{ top: "-10%", right: "-10%" }} />
       <div className="orb-pink" style={{ bottom: "10%", left: "-5%" }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -130,90 +222,69 @@ export default function GiftCards() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Preview Card 3D */}
+        {success ? (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}>
-            <h2 className="text-xl font-bold text-t-primary mb-6">
-              {lang === "fr" ? "Aperçu de votre carte" : "Card Preview"}
-            </h2>
-            <GiftCard3D amount={amount} recipientName={recipientName} message={message} />
-          </motion.div>
-
-          {/* Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}>
-            <div className="glass backdrop-blur-xl rounded-2xl p-6 sm:p-8">
-              <h2 className="text-xl font-bold text-t-primary mb-6">
-                {lang === "fr" ? "Personnaliser votre carte" : "Customize your card"}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-2xl mx-auto">
+            <div className="glass backdrop-blur-xl rounded-2xl p-8 text-center">
+              <div className="w-20 h-20 bg-green-dim rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="h-10 w-10 text-green" />
+              </div>
+              <h2 className="text-2xl font-bold text-t-primary mb-3">
+                {lang === "fr" ? "Carte créée avec succès !" : "Card created successfully!"}
               </h2>
+              <p className="text-t-secondary mb-6">
+                {lang === "fr" ? "Voici le code de votre carte cadeau :" : "Here's your gift card code:"}
+              </p>
+              <div className="glass rounded-xl p-6 mb-6 bg-accent/10 border border-accent/30">
+                <p className="text-3xl font-mono font-bold text-accent mb-2">{generatedCode}</p>
+                <p className="text-sm text-t-muted">
+                  {lang === "fr"
+                    ? "⚠️ Notez ce code, il ne sera plus affiché"
+                    : "⚠️ Save this code, it won't be shown again"}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSuccess(false);
+                  setGeneratedCode("");
+                  setAmount(50);
+                  setRecipientName("");
+                  setMessage("");
+                  setRecipientEmail("");
+                }}
+                className="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all">
+                {lang === "fr" ? "Créer une autre carte" : "Create another card"}
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}>
+              <EditableGiftCard3D
+                amount={amount}
+                setAmount={setAmount}
+                recipientName={recipientName}
+                setRecipientName={setRecipientName}
+                message={message}
+                setMessage={setMessage}
+                onValidate={handleValidate}
+                loading={loading}
+              />
+            </motion.div>
 
-              {success ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-dim rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Check className="h-8 w-8 text-green" />
-                  </div>
-                  <h3 className="text-xl font-bold text-t-primary mb-2">
-                    {lang === "fr" ? "Carte créée !" : "Card created!"}
-                  </h3>
-                  <p className="text-t-secondary mb-6">
-                    {lang === "fr" ? "Code de la carte cadeau :" : "Gift card code:"}
-                  </p>
-                  <div className="glass rounded-xl p-4 mb-6">
-                    <p className="text-2xl font-mono font-bold text-accent">{generatedCode}</p>
-                  </div>
-                  <p className="text-sm text-t-muted mb-6">
-                    {lang === "fr"
-                      ? "⚠️ Conservez ce code précieusement ! Il ne sera plus affiché."
-                      : "⚠️ Keep this code safe! It won't be displayed again."}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSuccess(false);
-                      setGeneratedCode("");
-                      setAmount(50);
-                    }}
-                    className="px-6 py-3 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all">
-                    {lang === "fr" ? "Créer une autre carte" : "Create another card"}
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handlePurchase} className="space-y-6">
-                  {/* Amount Selection */}
-                  <div>
-                    <label className="text-sm font-medium text-t-primary block mb-3">
-                      {lang === "fr" ? "Montant" : "Amount"}
-                    </label>
-                    <div className="grid grid-cols-5 gap-2 mb-3">
-                      {predefinedAmounts.map((amt) => (
-                        <button
-                          key={amt}
-                          type="button"
-                          onClick={() => setAmount(amt)}
-                          className={`py-2 rounded-lg font-semibold text-sm transition-all ${
-                            amount === amt
-                              ? "bg-accent text-white"
-                              : "glass hover:bg-white/10 text-t-primary"
-                          }`}>
-                          {amt}€
-                        </button>
-                      ))}
-                    </div>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
-                      min="5"
-                      max="500"
-                      className="w-full bg-bg/50 border border-border text-t-primary rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 backdrop-blur-sm"
-                    />
-                  </div>
-
-                  {/* Purchaser Email */}
+            {/* Emails below card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="max-w-2xl mx-auto mt-8">
+              <div className="glass backdrop-blur-xl rounded-2xl p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-t-primary block mb-2">
                       {lang === "fr" ? "Votre email" : "Your email"} *
@@ -227,25 +298,9 @@ export default function GiftCards() {
                       placeholder="votre@email.com"
                     />
                   </div>
-
-                  {/* Recipient Name */}
                   <div>
                     <label className="text-sm font-medium text-t-primary block mb-2">
-                      {lang === "fr" ? "Nom du destinataire (optionnel)" : "Recipient name (optional)"}
-                    </label>
-                    <input
-                      type="text"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      className="w-full bg-bg/50 border border-border text-t-primary rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 backdrop-blur-sm"
-                      placeholder="Jean Dupont"
-                    />
-                  </div>
-
-                  {/* Recipient Email */}
-                  <div>
-                    <label className="text-sm font-medium text-t-primary block mb-2">
-                      {lang === "fr" ? "Email du destinataire (optionnel)" : "Recipient email (optional)"}
+                      {lang === "fr" ? "Email destinataire (opt.)" : "Recipient email (opt.)"}
                     </label>
                     <input
                       type="email"
@@ -255,98 +310,18 @@ export default function GiftCards() {
                       placeholder="destinataire@email.com"
                     />
                   </div>
-
-                  {/* Message */}
-                  <div>
-                    <label className="text-sm font-medium text-t-primary block mb-2">
-                      {lang === "fr" ? "Message personnel (optionnel)" : "Personal message (optional)"}
-                    </label>
-                    <textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      maxLength={500}
-                      rows={3}
-                      className="w-full bg-bg/50 border border-border text-t-primary rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 backdrop-blur-sm resize-none"
-                      placeholder={lang === "fr" ? "Joyeux anniversaire ! 🎉" : "Happy birthday! 🎉"}
-                    />
-                    <p className="text-xs text-t-muted mt-1">{message.length}/500</p>
-                  </div>
-
-                  {error && (
-                    <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                      <AlertCircle className="h-5 w-5 text-red-400" />
-                      <p className="text-sm text-red-400">{error}</p>
-                    </div>
-                  )}
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-accent-glow flex items-center justify-center gap-2">
-                    {loading ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        {lang === "fr" ? "Création..." : "Creating..."}
-                      </>
-                    ) : (
-                      <>
-                        <Gift className="h-5 w-5" />
-                        {lang === "fr" ? "Créer la carte" : "Create card"}
-                      </>
-                    )}
-                  </motion.button>
-                </form>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* How it works */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-16">
-          <h2 className="text-2xl font-bold text-t-primary mb-8 text-center">
-            {lang === "fr" ? "Comment ça marche ?" : "How it works?"}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                step: "01",
-                title: lang === "fr" ? "Choisissez le montant" : "Choose amount",
-                desc: lang === "fr" ? "De 5€ à 500€" : "From 5€ to 500€",
-              },
-              {
-                step: "02",
-                title: lang === "fr" ? "Personnalisez" : "Customize",
-                desc: lang === "fr" ? "Nom, message personnel" : "Name, personal message",
-              },
-              {
-                step: "03",
-                title: lang === "fr" ? "Utilisez le code" : "Use the code",
-                desc: lang === "fr" ? "À appliquer au panier" : "Apply to cart",
-              },
-            ].map((item, i) => (
-              <div key={i} className="glass rounded-xl p-6 relative overflow-hidden">
-                <div className="absolute -top-6 -right-6 text-[120px] font-bold text-white opacity-[0.03] leading-none select-none">
-                  {item.step}
                 </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xs font-bold text-accent bg-accent-glow w-8 h-8 rounded-lg flex items-center justify-center">
-                      {item.step}
-                    </span>
-                    <h3 className="text-base font-semibold text-t-primary">{item.title}</h3>
+
+                {error && (
+                  <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl mt-4">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <p className="text-sm text-red-400">{error}</p>
                   </div>
-                  <p className="text-sm text-t-secondary">{item.desc}</p>
-                </div>
+                )}
               </div>
-            ))}
+            </motion.div>
           </div>
-        </motion.div>
+        )}
       </div>
     </div>
   );

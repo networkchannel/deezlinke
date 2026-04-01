@@ -128,7 +128,6 @@ class RateLimiter:
 
 rate_limiter = RateLimiter()
 
-# Rate limit configurations
 RATE_LIMITS = {
     "magic_link_ip": {"max": 5, "window": 300},      # 5 per 5 min per IP
     "magic_link_email": {"max": 3, "window": 300},   # 3 per 5 min per email
@@ -136,7 +135,6 @@ RATE_LIMITS = {
     "gift_card_validate": {"max": 10, "window": 600},  # 10 per 10 min (brute force protection)
     "gift_card_purchase": {"max": 5, "window": 3600},  # 5 per hour
 }
-    "order_ip": {"max": 20, "window": 3600},         # 20 per hour per IP
     "order_email": {"max": 10, "window": 3600},      # 10 per hour per email
     "geo_ip": {"max": 60, "window": 60},             # 60 per min per IP
 }
