@@ -303,147 +303,93 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          {/* Mobile: Horizontal Scroll */}
-          <div className="md:hidden overflow-x-auto pb-4 mb-6 scrollbar-hide">
-            <div className="flex gap-4 px-4 min-w-max">
-              {packs.filter((p) => p.id !== "custom").map((pack, i) => {
-                const name = t(pack.name_key);
-                const isPopular = pack.highlighted;
-                return (
-                  <Reveal key={pack.id} delay={i * 0.08}>
-                    <GlassCard glow={isPopular} className="p-6 relative text-center w-64 h-[380px] shrink-0 flex flex-col">
-                      {isPopular && (
-                        <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
-                          TOP
-                        </div>
-                      )}
-                      <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
-                          {pack.id === "solo" && <User className="h-6 w-6 text-accent" />}
-                          {pack.id === "duo" && <Users className="h-6 w-6 text-accent" />}
-                          {pack.id === "family" && <Users className="h-6 w-6 text-accent" />}
-                        </div>
+          {/* Mobile: Grille verticale */}
+          <div className="md:hidden grid grid-cols-1 gap-4 px-4 mb-6">
+            {packs.filter((p) => p.id !== "custom").map((pack, i) => {
+              const name = t(pack.name_key);
+              const isPopular = pack.highlighted;
+              return (
+                <Reveal key={pack.id} delay={i * 0.08}>
+                  <GlassCard glow={isPopular} className="p-6 relative text-center flex flex-col">
+                    {isPopular && (
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-secondary text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
+                        POPULAIRE
                       </div>
-                      <h3 className="text-lg font-bold text-t-primary mb-1">{name}</h3>
-                      <p className="text-xs text-t-muted mb-4">
-                        {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
-                      </p>
-                      <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums mb-4">
-                        {pack.price.toFixed(0)}€
-                      </p>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate(`/checkout/${pack.id}`)}
-                        className="w-full px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-lg transition-all">
-                        {lang === "fr" ? "Choisir" : "Choose"}
-                      </motion.button>
-                    </GlassCard>
-                  </Reveal>
-                );
-              })}
-            </div>
+                    )}
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
+                        {pack.id === "solo" && <User className="h-6 w-6 text-accent" />}
+                        {pack.id === "duo" && <Users className="h-6 w-6 text-accent" />}
+                        {pack.id === "family" && <Users className="h-6 w-6 text-accent" />}
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-t-primary mb-1">{name}</h3>
+                    <p className="text-xs text-t-muted mb-4">
+                      {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
+                    </p>
+                    <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums mb-6">
+                      {pack.price.toFixed(0)}€
+                    </p>
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(`/checkout/${pack.id}`)}
+                      className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg">
+                      {lang === "fr" ? "Choisir" : "Choose"}
+                    </motion.button>
+                  </GlassCard>
+                </Reveal>
+              );
+            })}
           </div>
 
-          {/* Desktop: Fan Layout (Éventail 3D Stack) */}
-          <div className="hidden md:block max-w-6xl mx-auto mb-6 relative" style={{ perspective: "2000px", height: "450px" }}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              {packs.filter((p) => p.id !== "custom").map((pack, i) => {
-                const name = t(pack.name_key);
-                const isPopular = pack.highlighted;
-                const isCentral = i === 1;
-                const rotation = i === 0 ? -8 : i === 2 ? 8 : 0;
-                const zIndex = isCentral ? 40 : i === 0 ? 20 : 10;
-                const scale = isCentral ? 1.12 : 0.95;
-                const translateY = isCentral ? -40 : i === 0 ? -10 : 20;
-                const translateX = i === 0 ? -180 : i === 2 ? 180 : 0;
-                
-                return (
+          {/* Desktop: Grille simple 3 colonnes */}
+          <div className="hidden md:grid grid-cols-3 gap-6 max-w-5xl mx-auto mb-6">
+            {packs.filter((p) => p.id !== "custom").map((pack, i) => {
+              const name = t(pack.name_key);
+              const isPopular = pack.highlighted;
+              return (
+                <Reveal key={pack.id} delay={i * 0.1}>
                   <motion.div
-                    key={pack.id}
-                    className="absolute"
-                    style={{ 
-                      zIndex,
-                      transformStyle: "preserve-3d"
-                    }}
-                    initial={{ 
-                      rotateY: rotation * 2,
-                      rotateZ: rotation,
-                      scale: scale * 0.8,
-                      y: translateY + 60,
-                      x: translateX * 1.3,
-                      opacity: 0
-                    }}
-                    animate={{ 
-                      rotateY: rotation,
-                      rotateZ: rotation,
-                      scale: scale,
-                      y: translateY,
-                      x: translateX,
-                      opacity: 1
-                    }}
-                    whileHover={{ 
-                      scale: scale * 1.1,
-                      y: translateY - 20,
-                      x: translateX * 0.8,
-                      rotateY: rotation * 0.3,
-                      rotateZ: rotation * 0.2,
-                      zIndex: 60,
-                      transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
-                    }}
-                    transition={{ 
-                      duration: 0.9, 
-                      delay: i * 0.18,
-                      ease: [0.22, 1, 0.36, 1]
-                    }}>
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
                     <GlassCard 
                       glow={isPopular} 
-                      className={`p-6 relative text-center w-72 h-[360px] flex flex-col ${
-                        isCentral ? "shadow-2xl shadow-accent-glow/50 border-2 border-accent/20" : "shadow-xl"
+                      className={`p-6 relative text-center h-full flex flex-col ${
+                        isPopular ? "border-2 border-accent/30" : ""
                       }`}>
                       {isPopular && (
-                        <motion.div 
-                          className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-lg z-10"
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ delay: i * 0.18 + 0.5, duration: 0.5, type: "spring" }}>
-                          TOP
-                        </motion.div>
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-secondary text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
+                          POPULAIRE
+                        </div>
                       )}
                       <div className="flex items-center justify-center mb-5">
-                        <motion.div 
-                          className="w-14 h-14 rounded-xl glass flex items-center justify-center"
-                          whileHover={{ rotate: 360, scale: 1.1 }}
-                          transition={{ duration: 0.6 }}>
+                        <div className="w-14 h-14 rounded-xl glass flex items-center justify-center">
                           {pack.id === "solo" && <User className="h-7 w-7 text-accent" />}
                           {pack.id === "duo" && <Users className="h-7 w-7 text-accent" />}
                           {pack.id === "family" && <Users className="h-7 w-7 text-accent" />}
-                        </motion.div>
+                        </div>
                       </div>
                       <h3 className="text-xl font-bold text-t-primary mb-2">{name}</h3>
                       <p className="text-sm text-t-muted mb-6">
                         {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
                       </p>
-                      <div className="flex-1 flex items-center justify-center">
-                        <motion.p 
-                          className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.2 }}>
+                      <div className="flex-1 flex items-center justify-center mb-6">
+                        <p className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums">
                           {pack.price.toFixed(0)}€
-                        </motion.p>
+                        </p>
                       </div>
                       <motion.button
-                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(168, 85, 247, 0.4)" }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => navigate(`/checkout/${pack.id}`)}
-                        className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-lg transition-all shadow-lg">
+                        className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg">
                         {lang === "fr" ? "Choisir" : "Choose"}
                       </motion.button>
                     </GlassCard>
                   </motion.div>
-                );
-              })}
-            </div>
+                </Reveal>
+              );
+            })}
           </div>
 
           <Reveal delay={0.2}>

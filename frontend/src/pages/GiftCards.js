@@ -16,151 +16,123 @@ function EditableGiftCard3D({
   onValidate,
   loading 
 }) {
-  const [editingField, setEditingField] = useState(null);
-  const lang = "fr";
-
   return (
-    <motion.div
-      className="relative w-full max-w-md mx-auto"
-      style={{ perspective: "1500px", aspectRatio: "1.586" }}
-      whileHover={{ rotateY: 2, rotateX: -2 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
-      <div 
-        className="relative w-full h-full bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-2xl p-6 sm:p-8 shadow-2xl shadow-accent-glow transform-gpu"
-        style={{ transformStyle: "preserve-3d" }}>
+    <div className="w-full max-w-xl mx-auto">
+      <motion.div
+        className="glass backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10"
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.3 }}>
         
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10 rounded-3xl overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl" />
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6 pb-6 border-b border-white/10">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-secondary flex items-center justify-center">
+            <Gift className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-t-primary">Carte Cadeau DeezLink</h3>
+            <p className="text-xs text-t-muted">Offrez Deezer Premium</p>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 h-full flex flex-col">
-          {/* Header avec icônes interactives */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            {/* Icône cadeau → Prénom */}
-            <div className="relative group">
-              <button
-                onClick={() => setEditingField(editingField === "name" ? null : "name")}
-                className="relative flex items-center gap-2 sm:gap-3 transition-all hover:scale-105">
-                <Gift className="h-8 sm:h-10 w-8 sm:w-10 text-white drop-shadow-lg" />
-                {editingField === "name" ? (
-                  <input
-                    type="text"
-                    value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="Prénom"
-                    autoFocus
-                    className="w-20 sm:w-28 bg-white/20 border-2 border-white/40 text-white text-sm sm:text-base font-bold rounded-lg px-2 py-1 backdrop-blur-sm placeholder:text-white/50 focus:border-white/60 focus:outline-none"
-                  />
-                ) : (
-                  <span className="text-white text-sm sm:text-lg font-bold drop-shadow">
-                    {recipientName || "Prénom"}
-                  </span>
-                )}
-              </button>
-              <div className="hidden sm:block absolute -bottom-5 left-0 text-white/60 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Cliquez pour éditer
-              </div>
+        {/* Form Fields */}
+        <div className="space-y-5 mb-6">
+          {/* Montant */}
+          <div>
+            <label className="block text-sm font-medium text-t-primary mb-2">
+              Montant
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(Number(e.target.value))}
+                min="5"
+                max="500"
+                className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary text-2xl font-bold rounded-xl px-4 py-3 pr-12 focus:border-accent focus:outline-none transition-all"
+                placeholder="50"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-t-muted">€</span>
             </div>
-
-            {/* Icône étoile → Montant */}
-            <div className="relative group">
-              <button
-                onClick={() => setEditingField(editingField === "amount" ? null : "amount")}
-                className="relative flex items-center gap-1 sm:gap-2 transition-all hover:scale-105">
-                <Sparkles className="h-7 sm:h-9 w-7 sm:w-9 text-white/90 drop-shadow-lg" />
-                {editingField === "amount" ? (
-                  <div className="flex items-baseline gap-0.5">
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
-                      min="5"
-                      max="500"
-                      autoFocus
-                      className="w-16 sm:w-20 bg-white/20 border-2 border-white/40 text-white text-2xl sm:text-3xl font-bold rounded-lg px-1 sm:px-2 py-0.5 sm:py-1 tabular-nums backdrop-blur-sm focus:border-white/60 focus:outline-none text-right"
-                    />
-                    <span className="text-2xl sm:text-3xl font-bold text-white">€</span>
-                  </div>
-                ) : (
-                  <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums drop-shadow-lg">
-                    {amount > 0 ? `${amount}€` : "—€"}
-                  </span>
-                )}
-              </button>
-              <div className="hidden sm:block absolute -bottom-5 right-0 text-white/60 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                Cliquez pour éditer
-              </div>
-            </div>
+            <p className="text-xs text-t-muted mt-1">Min 5€ • Max 500€</p>
           </div>
 
-          <div className="flex-1 flex flex-col">
-            <p className="text-white/80 text-xs sm:text-sm mb-3 sm:mb-4 font-medium">Carte Cadeau DeezLink</p>
+          {/* Destinataire */}
+          <div>
+            <label className="block text-sm font-medium text-t-primary mb-2">
+              Pour (optionnel)
+            </label>
+            <input
+              type="text"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              placeholder="Nom du destinataire"
+              className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary rounded-xl px-4 py-3 focus:border-accent focus:outline-none transition-all"
+            />
+          </div>
 
-            {/* Zone Message */}
-            <div className="flex-1 mb-3 sm:mb-4">
-              {editingField === "message" ? (
-                <div>
-                  <label className="text-white/70 text-[10px] sm:text-xs mb-1 sm:mb-2 block font-medium">Message personnel</label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Écrivez un message..."
-                    maxLength={200}
-                    rows={3}
-                    autoFocus
-                    className="w-full bg-white/20 border-2 border-white/40 text-white rounded-lg px-3 py-2 text-xs sm:text-sm backdrop-blur-sm placeholder:text-white/50 focus:border-white/60 focus:outline-none resize-none"
-                  />
-                  <p className="text-white/60 text-[10px] mt-1">{message.length}/200</p>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setEditingField("message")}
-                  className="w-full h-full min-h-[60px] sm:min-h-[80px] glass backdrop-blur-md rounded-lg p-3 border border-white/20 hover:border-white/40 transition-all text-left group">
-                  {message ? (
-                    <p className="text-white/90 text-xs sm:text-sm italic leading-relaxed">"{message}"</p>
-                  ) : (
-                    <p className="text-white/40 text-xs sm:text-sm italic">Cliquez pour ajouter un message...</p>
-                  )}
-                  <div className="hidden sm:block text-white/50 text-[9px] mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Cliquez pour éditer le message
-                  </div>
-                </button>
+          {/* Message */}
+          <div>
+            <label className="block text-sm font-medium text-t-primary mb-2">
+              Message personnel (optionnel)
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Joyeux anniversaire ! Profite de la musique..."
+              maxLength={200}
+              rows={4}
+              className="w-full bg-bg-secondary/50 border border-white/10 text-t-primary rounded-xl px-4 py-3 focus:border-accent focus:outline-none transition-all resize-none"
+            />
+            <p className="text-xs text-t-muted mt-1 text-right">{message.length}/200</p>
+          </div>
+        </div>
+
+        {/* Preview Card */}
+        {(amount > 0 || recipientName || message) && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mb-6">
+            <p className="text-xs text-t-muted mb-3">Aperçu :</p>
+            <div className="bg-gradient-to-br from-accent/20 to-secondary/20 rounded-xl p-6 border border-accent/20">
+              <div className="flex items-center justify-between mb-4">
+                <Sparkles className="h-8 w-8 text-accent" />
+                <span className="text-3xl font-bold text-accent">{amount > 0 ? `${amount}€` : "—"}</span>
+              </div>
+              {recipientName && (
+                <p className="text-sm text-t-primary font-medium mb-2">Pour {recipientName}</p>
+              )}
+              {message && (
+                <p className="text-xs text-t-muted italic">"{message}"</p>
               )}
             </div>
+          </motion.div>
+        )}
 
-            {/* Footer */}
-            <div className="pt-3 sm:pt-4 border-t border-white/30 space-y-2 sm:space-y-3">
-              <p className="text-white/70 text-[10px] sm:text-xs font-medium">Valable 12 mois • Deezer Premium</p>
-              
-              <motion.button
-                onClick={onValidate}
-                disabled={loading || !amount || amount < 5}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-accent font-bold rounded-lg sm:rounded-xl hover:bg-white/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base">
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                    Création...
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 sm:h-5 sm:w-5" />
-                    Valider la carte cadeau
-                  </>
-                )}
-              </motion.button>
-            </div>
-          </div>
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-6 border-t border-white/10">
+          <p className="text-xs text-t-muted">Valable 12 mois</p>
+          <motion.button
+            onClick={onValidate}
+            disabled={loading || !amount || amount < 5}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-3 bg-gradient-to-r from-accent to-secondary hover:opacity-90 text-white font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg">
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Création...
+              </>
+            ) : (
+              <>
+                <Check className="h-5 w-5" />
+                Créer la carte cadeau
+              </>
+            )}
+          </motion.button>
         </div>
-
-        {/* Shine effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-3xl opacity-0 hover:opacity-100 transition-opacity duration-700" />
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
