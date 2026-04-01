@@ -17,99 +17,121 @@ function EditableGiftCard3D({
   loading 
 }) {
   return (
-    <div className="w-full max-w-2xl mx-auto px-4">
-      {/* Carte 3D */}
+    <div className="w-full max-w-4xl mx-auto px-4">
+      {/* Carte Cadeau Premium Template */}
       <motion.div
-        className="relative mb-8"
-        style={{ perspective: "1500px" }}
-        whileHover={{ rotateY: 2, rotateX: -2 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
+        className="relative mb-12"
+        style={{ perspective: "2000px" }}
+        whileHover={{ rotateY: 3, rotateX: -2 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
+        
+        {/* La carte physique */}
         <div 
-          className="relative bg-gradient-to-br from-accent via-accent-hover to-secondary rounded-2xl p-6 sm:p-10 shadow-2xl shadow-accent-glow/50"
-          style={{ transformStyle: "preserve-3d", aspectRatio: "1.6" }}>
+          className="relative bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 rounded-3xl shadow-2xl overflow-hidden"
+          style={{ 
+            transformStyle: "preserve-3d",
+            aspectRatio: "1.7",
+            boxShadow: "0 30px 60px rgba(168, 85, 247, 0.4), 0 10px 20px rgba(236, 72, 153, 0.3)"
+          }}>
           
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-10 rounded-2xl overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full blur-3xl" />
+          {/* Pattern Background */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')]" />
           </div>
 
-          {/* Content */}
-          <div className="relative z-10 h-full flex flex-col justify-between">
-            {/* Header */}
+          {/* Shine Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-40" />
+          
+          {/* Content Container */}
+          <div className="relative z-10 p-8 sm:p-12 h-full flex flex-col justify-between">
+            
+            {/* Top: Logo & Brand */}
             <div className="flex items-center justify-between">
-              <Gift className="h-10 w-10 sm:h-12 sm:w-12 text-white drop-shadow-lg" />
-              <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-white/80" />
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                  <Gift className="h-7 w-7 text-white drop-shadow-lg" />
+                </div>
+                <div>
+                  <h3 className="text-white text-lg font-bold drop-shadow-md">DeezLink</h3>
+                  <p className="text-white/80 text-xs">Gift Card</p>
+                </div>
+              </div>
+              <Sparkles className="h-10 w-10 text-white/70 drop-shadow-lg" />
             </div>
 
-            {/* Infos éditables */}
-            <div className="space-y-3 sm:space-y-4">
-              <p className="text-white/70 text-xs sm:text-sm font-medium">Carte Cadeau DeezLink</p>
-              
-              {/* Montant éditable */}
-              <div className="flex items-baseline gap-2">
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  min="5"
-                  max="500"
-                  className="bg-white/20 border-2 border-white/30 text-white text-4xl sm:text-5xl font-bold rounded-lg px-3 py-2 w-32 sm:w-40 tabular-nums backdrop-blur-sm focus:border-white/60 focus:outline-none"
-                  placeholder="50"
-                />
-                <span className="text-4xl sm:text-5xl font-bold text-white">€</span>
+            {/* Middle: Amount (Editable) */}
+            <div className="flex flex-col gap-6">
+              <div>
+                <label className="text-white/70 text-sm font-medium mb-2 block drop-shadow">Montant</label>
+                <div className="flex items-baseline gap-2">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                    min="5"
+                    max="500"
+                    className="bg-white/25 border-2 border-white/40 text-white text-6xl sm:text-7xl font-black rounded-2xl px-4 py-2 w-48 sm:w-56 tabular-nums backdrop-blur-md focus:border-white/70 focus:outline-none focus:ring-4 focus:ring-white/20 transition-all"
+                    placeholder="50"
+                  />
+                  <span className="text-6xl sm:text-7xl font-black text-white drop-shadow-lg">€</span>
+                </div>
               </div>
 
               {/* Destinataire */}
               <div>
-                <label className="text-white/60 text-xs mb-1 block">Pour</label>
+                <label className="text-white/70 text-sm font-medium mb-2 block drop-shadow">Pour</label>
                 <input
                   type="text"
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                   placeholder="Nom du destinataire"
-                  className="w-full bg-white/20 border border-white/30 text-white rounded-lg px-3 py-2 text-sm sm:text-base backdrop-blur-sm placeholder:text-white/40 focus:border-white/60 focus:outline-none"
+                  className="w-full sm:w-96 bg-white/25 border-2 border-white/40 text-white text-lg font-semibold rounded-xl px-4 py-3 backdrop-blur-md placeholder:text-white/50 focus:border-white/70 focus:outline-none focus:ring-4 focus:ring-white/20 transition-all"
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label className="text-white/60 text-xs mb-1 block">Message</label>
+                <label className="text-white/70 text-sm font-medium mb-2 block drop-shadow">Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Votre message..."
-                  maxLength={150}
+                  placeholder="Joyeux anniversaire !"
+                  maxLength={120}
                   rows={2}
-                  className="w-full bg-white/20 border border-white/30 text-white rounded-lg px-3 py-2 text-xs sm:text-sm backdrop-blur-sm placeholder:text-white/40 focus:border-white/60 focus:outline-none resize-none"
+                  className="w-full bg-white/25 border-2 border-white/40 text-white text-sm rounded-xl px-4 py-3 backdrop-blur-md placeholder:text-white/50 focus:border-white/70 focus:outline-none focus:ring-4 focus:ring-white/20 transition-all resize-none"
                 />
-                <p className="text-white/50 text-[10px] mt-1 text-right">{message.length}/150</p>
+                <p className="text-white/60 text-xs mt-1 text-right drop-shadow">{message.length}/120</p>
               </div>
             </div>
 
-            {/* Footer */}
-            <p className="text-white/60 text-[10px] sm:text-xs">Valable 12 mois • Deezer Premium</p>
+            {/* Bottom: Footer */}
+            <div className="flex items-center justify-between">
+              <p className="text-white/80 text-xs drop-shadow">Valable 12 mois • Deezer Premium</p>
+              <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center">
+                <div className="w-6 h-6 rounded bg-white/30" />
+              </div>
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Bouton Valider ESPACÉ */}
+      {/* Bouton Valider - BIEN ESPACÉ */}
       <div className="flex justify-center">
         <motion.button
           onClick={onValidate}
           disabled={loading || !amount || amount < 5}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-8 py-4 bg-white text-accent font-bold text-lg rounded-xl hover:bg-white/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3 shadow-2xl">
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="px-12 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xl rounded-2xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-4 shadow-2xl shadow-purple-500/50">
           {loading ? (
             <>
-              <div className="w-6 h-6 border-3 border-accent border-t-transparent rounded-full animate-spin" />
-              Création en cours...
+              <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Création en cours...</span>
             </>
           ) : (
             <>
-              <Check className="h-6 w-6" />
-              Créer la carte cadeau
+              <Check className="h-7 w-7" />
+              <span>Créer la carte cadeau</span>
             </>
           )}
         </motion.button>

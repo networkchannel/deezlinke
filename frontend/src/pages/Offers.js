@@ -92,9 +92,9 @@ export default function Offers() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: i * 0.1 }}>
-                    <GlassCard glow={isPopular} className="p-6 relative overflow-hidden w-72 h-[520px] shrink-0 flex flex-col">
+                    <GlassCard glow={isPopular} className="p-6 relative overflow-visible w-72 shrink-0 flex flex-col">
                       {isPopular && (
-                        <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-accent to-secondary text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg z-10">
                           {lang === "fr" ? "POPULAIRE" : "POPULAR"}
                         </div>
                       )}
@@ -149,23 +149,25 @@ export default function Offers() {
                         </div>
                       </div>
 
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate(`/checkout/${pack.id}`)}
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow mt-auto mb-2">
-                        {lang === "fr" ? "Acheter" : "Buy"}
-                        <ArrowRight className="h-5 w-5" />
-                      </motion.button>
+                      <div className="mt-auto space-y-3">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate(`/checkout/${pack.id}`)}
+                          className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-accent hover:bg-accent-hover text-white font-semibold rounded-xl transition-all shadow-lg shadow-accent-glow">
+                          {lang === "fr" ? "Acheter" : "Buy"}
+                          <ArrowRight className="h-5 w-5" />
+                        </motion.button>
 
-                      <motion.button
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        onClick={() => addToCart(pack)}
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 glass hover:bg-white/10 text-t-primary font-medium rounded-xl transition-all text-sm">
-                        <ShoppingCart className="h-4 w-4" />
-                        {lang === "fr" ? "Ajouter" : "Add"}
-                      </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          onClick={() => addToCart(pack)}
+                          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 glass hover:bg-white/10 text-t-primary font-medium rounded-xl transition-all text-sm">
+                          <ShoppingCart className="h-4 w-4" />
+                          {lang === "fr" ? "Ajouter" : "Add"}
+                        </motion.button>
+                      </div>
                     </GlassCard>
                   </motion.div>
                 );
