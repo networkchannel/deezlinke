@@ -147,8 +147,9 @@ COUNTRY_NAMES = {
 
 # Pricing Packs - 2 packs fixes + custom
 PACKS = [
-    {"id": "single", "name_key": "pack_single", "quantity": 1, "price": 5.00, "unit_price": 5.00, "discount": 0, "icon": "disc"},
-    {"id": "famille", "name_key": "pack_famille", "quantity": 5, "price": 20.00, "unit_price": 4.00, "discount": 20, "icon": "users", "highlighted": True},
+    {"id": "solo", "name_key": "pack_solo", "quantity": 1, "price": 5.00, "unit_price": 5.00, "discount": 0, "icon": "user"},
+    {"id": "duo", "name_key": "pack_duo", "quantity": 2, "price": 9.00, "unit_price": 4.50, "discount": 10, "icon": "users"},
+    {"id": "family", "name_key": "pack_family", "quantity": 5, "price": 20.00, "unit_price": 4.00, "discount": 20, "icon": "users", "highlighted": True},
 ]
 
 ADMIN_IP = "5.49.128.70"

@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Landing from "@/pages/Landing";
+import Offers from "@/pages/Offers";
 import Checkout from "@/pages/Checkout";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import OrderHistory from "@/pages/OrderHistory";
@@ -21,7 +22,7 @@ function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/offers" element={<Landing />} />
+              <Route path="/offers" element={<Offers />} />
               <Route path="/checkout/:packId" element={<Checkout />} />
               <Route path="/order/:orderId" element={<OrderConfirmation />} />
               <Route path="/history" element={<OrderHistory />} />
