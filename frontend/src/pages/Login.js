@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Equalizer } from "@/components/Equalizer";
 import { Loader2, Mail, Sparkles } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL || "";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function Login() {
   const { t } = useTranslation();

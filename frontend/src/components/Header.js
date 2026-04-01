@@ -10,7 +10,7 @@ import { Globe, Menu, X, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-const API = process.env.REACT_APP_BACKEND_URL || "";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function Header() {
   const { t, i18n } = useTranslation();

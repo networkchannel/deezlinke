@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Equalizer } from "@/components/Equalizer";
 import { ArrowLeft, Loader2, Lock, Music, Zap, SlidersHorizontal } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL || "";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function Checkout() {
   const { t, i18n } = useTranslation();

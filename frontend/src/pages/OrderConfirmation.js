@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Equalizer } from "@/components/Equalizer";
 import { Check, Copy, Loader2, AlertTriangle, ExternalLink, Music, PartyPopper, Clock } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL || "";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function OrderConfirmation() {
   const { t, i18n } = useTranslation();

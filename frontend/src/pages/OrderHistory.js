@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, ExternalLink } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL || "";
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function OrderHistory() {
   const { t } = useTranslation();

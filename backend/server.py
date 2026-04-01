@@ -85,6 +85,7 @@ LANG_MAP = {
 }
 
 app = FastAPI(title="DeezLink API")
+api_router = APIRouter(prefix="/api")
 
 # --- Email Helper ---
 def send_email(to_email: str, subject: str, html_content: str) -> bool:
@@ -395,7 +396,7 @@ def get_client_ip(request: Request) -> str:
 # ==================== ROUTES (NO /api prefix) ====================
 
 # --- Auth Routes ---
-@app.post("/auth/login")
+@api_router.post("/auth/login")
 async def login(req: LoginRequest, request: Request):
     email = req.email.strip().lower()
     user = await db.users.find_one({"email": email})
@@ -413,19 +414,19 @@ async def login(req: LoginRequest, request: Request):
     response.set_cookie(key="access_token", value=token, httponly=True, secure=True, samesite="none", max_age=86400, path="/")
     return response
 
-@app.post("/auth/logout")
+@api_router.post("/auth/logout")
 async def logout():
     response = JSONResponse(content={"message": "Logged out"})
     response.delete_cookie("access_token", path="/")
     return response
 
-@app.get("/auth/me")
+@api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
     user["loyalty_tier"] = get_loyalty_tier(user.get("loyalty_points", 0))
     return user
 
 # --- Magic Link Auth ---
-@app.post("/auth/magic")
+@api_router.post("/auth/magic")
 async def magic_link_request(req: MagicLinkRequest, request: Request):
     email = req.email.strip().lower()
     if not email or "@" not in email:
@@ -449,7 +450,7 @@ async def magic_link_request(req: MagicLinkRequest, request: Request):
     
     return {"message": "Magic link sent", "email": email}
 
-@app.post("/auth/magic/verify")
+@api_router.post("/auth/magic/verify")
 async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
     token_doc = await db.magic_tokens.find_one({"token": req.token})
     if not token_doc:
@@ -492,14 +493,14 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
     return response
 
 # --- Admin IP Check & Auto-Login ---
-@app.get("/admin/check-ip")
+@api_router.get("/admin/check-ip")
 async def check_admin_ip(request: Request):
     client_ip = get_client_ip(request)
     is_admin_ip = client_ip == ADMIN_IP
     logger.info(f"Admin IP check: {client_ip} == {ADMIN_IP} ? {is_admin_ip}")
     return {"is_admin": is_admin_ip, "ip": client_ip, "expected_ip": ADMIN_IP}
 
-@app.post("/admin/auto-login")
+@api_router.post("/admin/auto-login")
 async def admin_auto_login(request: Request):
     client_ip = get_client_ip(request)
     logger.info(f"Admin auto-login attempt from IP: {client_ip}")
@@ -523,12 +524,12 @@ async def admin_auto_login(request: Request):
     return response
 
 # --- Pack Routes ---
-@app.get("/packs")
+@api_router.get("/packs")
 async def get_packs():
     return {"packs": PACKS}
 
 # --- Custom Pricing Route ---
-@app.get("/pricing/calculate")
+@api_router.get("/pricing/calculate")
 async def pricing_calculate(quantity: int = 1, email: Optional[str] = None):
     if quantity < 1 or quantity > 1000:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 1000")
@@ -543,7 +544,7 @@ async def pricing_calculate(quantity: int = 1, email: Optional[str] = None):
     return calculate_custom_price(quantity, loyalty_discount)
 
 # --- Loyalty Routes ---
-@app.get("/loyalty/status")
+@api_router.get("/loyalty/status")
 async def get_loyalty_status(email: str):
     user = await db.users.find_one({"email": email.strip().lower()})
     if not user:
@@ -566,12 +567,12 @@ async def get_loyalty_status(email: str):
         "points_to_next": next_tier["min_points"] - points if next_tier else 0
     }
 
-@app.get("/loyalty/tiers")
+@api_router.get("/loyalty/tiers")
 async def get_loyalty_tiers():
     return {"tiers": LOYALTY_TIERS}
 
 # --- Geo IP Route ---
-@app.get("/geo")
+@api_router.get("/geo")
 async def get_geo(request: Request):
     client_ip = get_client_ip(request)
     logger.info(f"Geo detection for IP: {client_ip}")
@@ -604,7 +605,7 @@ async def get_geo(request: Request):
     return result
 
 # --- Order Routes ---
-@app.post("/orders/create")
+@api_router.post("/orders/create")
 async def create_order(req: OrderCreateRequest):
     pack = next((p for p in PACKS if p["id"] == req.pack_id), None)
     if not pack:
@@ -683,7 +684,7 @@ async def create_order(req: OrderCreateRequest):
         "status": order["status"],
     }
 
-@app.post("/orders/create-custom")
+@api_router.post("/orders/create-custom")
 async def create_custom_order(req: CustomOrderRequest):
     if req.quantity < 1 or req.quantity > 1000:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 1000")
@@ -752,14 +753,14 @@ async def create_custom_order(req: CustomOrderRequest):
         "status": order["status"],
     }
 
-@app.get("/orders/{order_id}")
+@api_router.get("/orders/{order_id}")
 async def get_order(order_id: str):
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
 
-@app.post("/orders/{order_id}/confirm-mock")
+@api_router.post("/orders/{order_id}/confirm-mock")
 async def confirm_mock_order(order_id: str):
     """Mock payment confirmation for testing"""
     order = await db.orders.find_one({"order_id": order_id})
@@ -805,14 +806,14 @@ async def confirm_mock_order(order_id: str):
     
     return {"status": new_status, "links_assigned": len(assigned_links), "loyalty_points_earned": points_earned}
 
-@app.get("/orders/history/{email}")
+@api_router.get("/orders/history/{email}")
 async def get_order_history(email: str):
     email = email.strip().lower()
     orders = await db.orders.find({"email": email}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"orders": orders}
 
 # --- Webhook Routes ---
-@app.post("/webhooks/oxapay")
+@api_router.post("/webhooks/oxapay")
 async def oxapay_webhook(request: Request):
     try:
         body = await request.json()
@@ -879,7 +880,7 @@ async def oxapay_webhook(request: Request):
         return {"status": "ok"}
 
 # --- Admin Routes ---
-@app.get("/admin/stats")
+@api_router.get("/admin/stats")
 async def admin_stats(user: dict = Depends(require_admin)):
     total_orders = await db.orders.count_documents({})
     completed_orders = await db.orders.count_documents({"status": "completed"})
@@ -907,13 +908,13 @@ async def admin_stats(user: dict = Depends(require_admin)):
         "total_users": total_users,
     }
 
-@app.get("/admin/orders")
+@api_router.get("/admin/orders")
 async def admin_orders(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50):
     orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).skip(skip).to_list(limit)
     total = await db.orders.count_documents({})
     return {"orders": orders, "total": total}
 
-@app.get("/admin/links")
+@api_router.get("/admin/links")
 async def admin_links(user: dict = Depends(require_admin), status_filter: str = "all", skip: int = 0, limit: int = 50):
     query = {}
     if status_filter != "all":
@@ -922,7 +923,7 @@ async def admin_links(user: dict = Depends(require_admin), status_filter: str = 
     total = await db.links.count_documents(query)
     return {"links": links, "total": total}
 
-@app.post("/admin/links/import")
+@api_router.post("/admin/links/import")
 async def admin_import_links(req: LinkImportRequest, user: dict = Depends(require_admin)):
     imported = 0
     for url in req.links:
@@ -941,7 +942,7 @@ async def admin_import_links(req: LinkImportRequest, user: dict = Depends(requir
     
     return {"imported": imported, "total_available": await db.links.count_documents({"status": "available"})}
 
-@app.post("/admin/links/add")
+@api_router.post("/admin/links/add")
 async def admin_add_link(req: LinkManualAdd, user: dict = Depends(require_admin)):
     url = req.link.strip()
     if not url:
@@ -958,14 +959,14 @@ async def admin_add_link(req: LinkManualAdd, user: dict = Depends(require_admin)
     })
     return {"message": "Link added", "total_available": await db.links.count_documents({"status": "available"})}
 
-@app.delete("/admin/orders/{order_id}")
+@api_router.delete("/admin/orders/{order_id}")
 async def admin_delete_order(order_id: str, user: dict = Depends(require_admin)):
     result = await db.orders.delete_one({"order_id": order_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"message": "Order deleted"}
 
-@app.get("/admin/users")
+@api_router.get("/admin/users")
 async def admin_users(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50):
     users = await db.users.find({}, {"password_hash": 0}).sort("created_at", -1).skip(skip).to_list(limit)
     for u in users:
@@ -973,6 +974,9 @@ async def admin_users(user: dict = Depends(require_admin), skip: int = 0, limit:
         u["loyalty_tier"] = get_loyalty_tier(u.get("loyalty_points", 0))
     total = await db.users.count_documents({})
     return {"users": users, "total": total}
+
+# Include API router
+app.include_router(api_router)
 
 # CORS
 app.add_middleware(

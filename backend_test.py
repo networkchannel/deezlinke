@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 class DeezLinkAPITester:
-    def __init__(self, base_url="http://localhost:8001"):
+    def __init__(self, base_url="https://deezlink-installer.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
@@ -19,7 +19,10 @@ class DeezLinkAPITester:
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        # Ensure endpoint starts with /api prefix for Kubernetes compatibility
+        if not endpoint.startswith('api/'):
+            endpoint = f"api/{endpoint.lstrip('/')}"
+        url = f"{self.base_url}/{endpoint}"
         test_headers = {'Content-Type': 'application/json'}
         if headers:
             test_headers.update(headers)
@@ -58,9 +61,9 @@ class DeezLinkAPITester:
             return False, {}
 
     def test_packs_endpoint(self):
-        """Test GET /packs - should return packs without /api prefix"""
+        """Test GET /api/packs - should return packs"""
         success, response = self.run_test(
-            "Get Packs (no /api prefix)",
+            "Get Packs",
             "GET", 
             "packs",
             200
