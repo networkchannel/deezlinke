@@ -345,18 +345,18 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Desktop: Fan Layout (Éventail 3D) */}
+          {/* Desktop: Fan Layout (Éventail 3D Stack) */}
           <div className="hidden md:block max-w-6xl mx-auto mb-6 relative" style={{ perspective: "2000px", height: "450px" }}>
             <div className="absolute inset-0 flex items-center justify-center">
               {packs.filter((p) => p.id !== "custom").map((pack, i) => {
                 const name = t(pack.name_key);
                 const isPopular = pack.highlighted;
                 const isCentral = i === 1;
-                const rotation = i === 0 ? -10 : i === 2 ? 10 : 0;
-                const zIndex = isCentral ? 30 : 10;
-                const scale = isCentral ? 1.15 : 0.92;
-                const translateY = isCentral ? -30 : 10;
-                const translateX = i === 0 ? -320 : i === 2 ? 320 : 0;
+                const rotation = i === 0 ? -8 : i === 2 ? 8 : 0;
+                const zIndex = isCentral ? 40 : i === 0 ? 20 : 10;
+                const scale = isCentral ? 1.12 : 0.95;
+                const translateY = isCentral ? -40 : i === 0 ? -10 : 20;
+                const translateX = i === 0 ? -180 : i === 2 ? 180 : 0;
                 
                 return (
                   <motion.div
@@ -383,11 +383,12 @@ export default function Landing() {
                       opacity: 1
                     }}
                     whileHover={{ 
-                      scale: scale * 1.08,
-                      y: translateY - 15,
-                      rotateY: rotation * 0.4,
-                      rotateZ: rotation * 0.3,
-                      zIndex: 50,
+                      scale: scale * 1.1,
+                      y: translateY - 20,
+                      x: translateX * 0.8,
+                      rotateY: rotation * 0.3,
+                      rotateZ: rotation * 0.2,
+                      zIndex: 60,
                       transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
                     }}
                     transition={{ 

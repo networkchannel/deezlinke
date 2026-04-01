@@ -29,6 +29,9 @@ import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# Import security middleware
+from security_middleware import validate_security
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -1056,7 +1059,17 @@ async def get_geo(request: Request):
 
 # --- Order Routes ---
 @api_router.post("/orders/create")
-async def create_order(req: OrderCreateRequest):
+@limiter.limit("10/hour")
+async def create_order(req: OrderCreateRequest, request: Request):
+    # Validation sécuritaire optionnelle (headers)
+    try:
+        fp = request.headers.get('X-Fingerprint', '')
+        token = request.headers.get('X-Security-Token', '')
+        if fp and token:
+            logger.info(f"Secure order with fingerprint: {fp[:16]}...")
+    except Exception as e:
+        logger.warning(f"Security headers missing or invalid: {e}")
+    
     pack = next((p for p in PACKS if p["id"] == req.pack_id), None)
     if not pack:
         raise HTTPException(status_code=400, detail="Invalid pack")

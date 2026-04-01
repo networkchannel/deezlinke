@@ -2,6 +2,8 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { useEffect } from "react";
+import { initSecurity } from "@/utils/security";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Landing from "@/pages/Landing";
@@ -16,6 +18,11 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Profile from "@/pages/Profile";
 
 function App() {
+  // Initialiser la sécurité au chargement
+  useEffect(() => {
+    initSecurity();
+  }, []);
+
   return (
     <AuthProvider>
       <CartProvider>
