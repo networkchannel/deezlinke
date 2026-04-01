@@ -7,8 +7,11 @@ load_dotenv(ROOT_DIR / '.env')
 from fastapi import FastAPI, APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 from bson import ObjectId
@@ -130,6 +133,9 @@ RATE_LIMITS = {
     "magic_link_ip": {"max": 5, "window": 300},      # 5 per 5 min per IP
     "magic_link_email": {"max": 3, "window": 300},   # 3 per 5 min per email
     "login_ip": {"max": 10, "window": 300},          # 10 per 5 min per IP
+    "gift_card_validate": {"max": 10, "window": 600},  # 10 per 10 min (brute force protection)
+    "gift_card_purchase": {"max": 5, "window": 3600},  # 5 per hour
+}
     "order_ip": {"max": 20, "window": 3600},         # 20 per hour per IP
     "order_email": {"max": 10, "window": 3600},      # 10 per hour per email
     "geo_ip": {"max": 60, "window": 60},             # 60 per min per IP
@@ -1649,6 +1655,123 @@ async def startup():
                 "sold_at": None,
             })
         logger.info(f"Seeded {len(demo_links)} demo links")
+
+# ==================== GIFT CARD SYSTEM ====================
+from gift_cards import (
+    create_gift_card,
+    validate_gift_card,
+    apply_gift_card_to_order,
+    hash_gift_card_code
+)
+
+class GiftCardPurchase(BaseModel):
+    amount: float = Field(..., gt=0, le=500)
+    purchaser_email: EmailStr
+    recipient_email: Optional[EmailStr] = None
+    recipient_name: Optional[str] = None
+    message: Optional[str] = Field(None, max_length=500)
+
+class GiftCardValidation(BaseModel):
+    code: str = Field(..., min_length=14, max_length=20)
+
+class GiftCardApplication(BaseModel):
+    code: str
+    amount_to_use: float = Field(..., gt=0)
+    order_id: str
+
+@api_router.post("/gift-cards/purchase")
+async def purchase_gift_card(data: GiftCardPurchase, request: Request):
+    """Purchase a gift card"""
+    client_ip = request.client.host
+    
+    # Rate limiting
+    key = f"gift_card_purchase_{client_ip}"
+    if not rate_limiter.check_rate_limit(key, **RATE_LIMITS["gift_card_purchase"]):
+        raise HTTPException(status_code=429, detail="Too many purchase attempts. Please try again later.")
+    
+    # Validate amount
+    if data.amount < 5 or data.amount > 500:
+        raise HTTPException(status_code=400, detail="Amount must be between 5€ and 500€")
+    
+    try:
+        gift_card = await create_gift_card(
+            db=db,
+            amount=data.amount,
+            purchaser_email=data.purchaser_email,
+            recipient_email=data.recipient_email,
+            recipient_name=data.recipient_name,
+            message=data.message,
+        )
+        
+        return {
+            "success": True,
+            "gift_card": gift_card
+        }
+    except Exception as e:
+        logger.error(f"Gift card purchase error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create gift card")
+
+@api_router.post("/gift-cards/validate")
+async def validate_gift_card_route(data: GiftCardValidation, request: Request):
+    """Validate a gift card code (with brute force protection)"""
+    client_ip = request.client.host
+    
+    # Strict rate limiting for validation to prevent brute force
+    key = f"gift_card_validate_{client_ip}"
+    if not rate_limiter.check_rate_limit(key, **RATE_LIMITS["gift_card_validate"]):
+        raise HTTPException(status_code=429, detail="Too many validation attempts. Please wait 10 minutes.")
+    
+    # Validate code format
+    code = data.code.strip().upper()
+    if not code.startswith("DEEZ-"):
+        raise HTTPException(status_code=400, detail="Invalid gift card format")
+    
+    try:
+        result = await validate_gift_card(db, code, "anonymous")
+        
+        if not result["valid"]:
+            return {"valid": False, "error": result.get("error", "Invalid code")}
+        
+        return {
+            "valid": True,
+            "balance": result["balance"]
+        }
+    except Exception as e:
+        logger.error(f"Gift card validation error: {e}")
+        return {"valid": False, "error": "Validation failed"}
+
+@api_router.post("/gift-cards/apply")
+async def apply_gift_card_route(data: GiftCardApplication, request: Request):
+    """Apply gift card to order"""
+    client_ip = request.client.host
+    
+    # Rate limiting
+    key = f"gift_card_apply_{client_ip}"
+    if not rate_limiter.check_rate_limit(key, **RATE_LIMITS["gift_card_validate"]):
+        raise HTTPException(status_code=429, detail="Too many attempts")
+    
+    code_hash = hash_gift_card_code(data.code)
+    
+    try:
+        result = await apply_gift_card_to_order(
+            db=db,
+            code_hash=code_hash,
+            amount_to_use=data.amount_to_use,
+            user_email="order_email",  # Should be from authenticated user
+            order_id=data.order_id
+        )
+        
+        if not result["success"]:
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to apply gift card"))
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Gift card application error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to apply gift card")
+
+
     
     logger.info(f"DeezLink API started - SMTP: {SMTP_SERVER}:{SMTP_PORT}, OxaPay: {'configured' if OXAPAY_API_KEY else 'not configured'}")
 

@@ -92,7 +92,7 @@ export default function Offers() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: i * 0.1 }}>
-                    <GlassCard glow={isPopular} className="p-6 relative overflow-hidden w-72 shrink-0 flex flex-col">
+                    <GlassCard glow={isPopular} className="p-6 relative overflow-hidden w-72 h-[520px] shrink-0 flex flex-col">
                       {isPopular && (
                         <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl">
                           {lang === "fr" ? "POPULAIRE" : "POPULAR"}

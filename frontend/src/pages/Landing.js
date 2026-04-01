@@ -312,7 +312,7 @@ export default function Landing() {
                 const isPopular = pack.highlighted;
                 return (
                   <Reveal key={pack.id} delay={i * 0.08}>
-                    <GlassCard glow={isPopular} className="p-6 relative text-center w-64 shrink-0">
+                    <GlassCard glow={isPopular} className="p-6 relative text-center w-64 h-[380px] shrink-0 flex flex-col">
                       {isPopular && (
                         <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
                           TOP
