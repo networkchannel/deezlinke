@@ -60,25 +60,31 @@ function ArtistCarousel({ artists, lang }) {
           {[...artists, ...artists, ...artists].map((artist, i) => (
             <motion.div
               key={`${artist.id}-${i}`}
-              className="shrink-0 w-32"
-              whileHover={{ scale: 1.08 }}
-              transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}>
-              <div className="glass rounded-xl p-3 backdrop-blur-xl transition-all duration-300 hover:shadow-lg hover:shadow-accent-glow/20">
-                <div className="mb-2 overflow-hidden rounded-lg">
+              className="shrink-0 w-32">
+              <motion.div 
+                className="glass rounded-xl p-3 backdrop-blur-xl transition-all duration-300"
+                whileHover={{ scale: 1.05, y: -4 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
+                <div className="mb-2 rounded-lg overflow-visible relative">
                   <motion.img
                     src={artist.picture}
                     alt={artist.name}
-                    className="w-full aspect-square object-cover"
+                    className="w-full aspect-square object-cover rounded-lg"
                     loading="lazy"
-                    whileHover={{ scale: 1.12 }}
-                    transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+                    whileHover={{ scale: 1.15 }}
+                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   />
                 </div>
                 <p className="text-xs font-semibold text-t-primary truncate">{artist.name}</p>
                 <p className="text-[10px] text-t-muted">
-                  {(artist.nb_fan / 1000000).toFixed(1)}M fans
+                  {artist.nb_fan >= 1000000 
+                    ? `${(artist.nb_fan / 1000000).toFixed(1)}M` 
+                    : artist.nb_fan >= 1000 
+                    ? `${(artist.nb_fan / 1000).toFixed(0)}K` 
+                    : artist.nb_fan
+                  } fans
                 </p>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </motion.div>
@@ -339,44 +345,104 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Desktop: Grid */}
-          <div className="hidden md:grid grid-cols-3 gap-4 max-w-4xl mx-auto mb-6">
-            {packs.filter((p) => p.id !== "custom").map((pack, i) => {
-              const name = t(pack.name_key);
-              const isPopular = pack.highlighted;
-              return (
-                <Reveal key={pack.id} delay={i * 0.08}>
-                  <GlassCard glow={isPopular} className="p-6 relative text-center">
-                    {isPopular && (
-                      <div className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
-                        TOP
+          {/* Desktop: Fan Layout (Éventail 3D) */}
+          <div className="hidden md:block max-w-6xl mx-auto mb-6 relative" style={{ perspective: "2000px", height: "450px" }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {packs.filter((p) => p.id !== "custom").map((pack, i) => {
+                const name = t(pack.name_key);
+                const isPopular = pack.highlighted;
+                const isCentral = i === 1;
+                const rotation = i === 0 ? -10 : i === 2 ? 10 : 0;
+                const zIndex = isCentral ? 30 : 10;
+                const scale = isCentral ? 1.15 : 0.92;
+                const translateY = isCentral ? -30 : 10;
+                const translateX = i === 0 ? -320 : i === 2 ? 320 : 0;
+                
+                return (
+                  <motion.div
+                    key={pack.id}
+                    className="absolute"
+                    style={{ 
+                      zIndex,
+                      transformStyle: "preserve-3d"
+                    }}
+                    initial={{ 
+                      rotateY: rotation * 2,
+                      rotateZ: rotation,
+                      scale: scale * 0.8,
+                      y: translateY + 60,
+                      x: translateX * 1.3,
+                      opacity: 0
+                    }}
+                    animate={{ 
+                      rotateY: rotation,
+                      rotateZ: rotation,
+                      scale: scale,
+                      y: translateY,
+                      x: translateX,
+                      opacity: 1
+                    }}
+                    whileHover={{ 
+                      scale: scale * 1.08,
+                      y: translateY - 15,
+                      rotateY: rotation * 0.4,
+                      rotateZ: rotation * 0.3,
+                      zIndex: 50,
+                      transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                    }}
+                    transition={{ 
+                      duration: 0.9, 
+                      delay: i * 0.18,
+                      ease: [0.22, 1, 0.36, 1]
+                    }}>
+                    <GlassCard 
+                      glow={isPopular} 
+                      className={`p-6 relative text-center w-72 h-[360px] flex flex-col ${
+                        isCentral ? "shadow-2xl shadow-accent-glow/50 border-2 border-accent/20" : "shadow-xl"
+                      }`}>
+                      {isPopular && (
+                        <motion.div 
+                          className="absolute top-0 right-0 bg-gradient-to-br from-accent to-secondary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-lg z-10"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ delay: i * 0.18 + 0.5, duration: 0.5, type: "spring" }}>
+                          TOP
+                        </motion.div>
+                      )}
+                      <div className="flex items-center justify-center mb-5">
+                        <motion.div 
+                          className="w-14 h-14 rounded-xl glass flex items-center justify-center"
+                          whileHover={{ rotate: 360, scale: 1.1 }}
+                          transition={{ duration: 0.6 }}>
+                          {pack.id === "solo" && <User className="h-7 w-7 text-accent" />}
+                          {pack.id === "duo" && <Users className="h-7 w-7 text-accent" />}
+                          {pack.id === "family" && <Users className="h-7 w-7 text-accent" />}
+                        </motion.div>
                       </div>
-                    )}
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-12 h-12 rounded-xl glass flex items-center justify-center">
-                        {pack.id === "solo" && <User className="h-6 w-6 text-accent" />}
-                        {pack.id === "duo" && <Users className="h-6 w-6 text-accent" />}
-                        {pack.id === "family" && <Users className="h-6 w-6 text-accent" />}
+                      <h3 className="text-xl font-bold text-t-primary mb-2">{name}</h3>
+                      <p className="text-sm text-t-muted mb-6">
+                        {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
+                      </p>
+                      <div className="flex-1 flex items-center justify-center">
+                        <motion.p 
+                          className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums"
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.2 }}>
+                          {pack.price.toFixed(0)}€
+                        </motion.p>
                       </div>
-                    </div>
-                    <h3 className="text-lg font-bold text-t-primary mb-1">{name}</h3>
-                    <p className="text-xs text-t-muted mb-4">
-                      {pack.quantity} {lang === "fr" ? (pack.quantity > 1 ? "liens" : "lien") : pack.quantity > 1 ? "links" : "link"}
-                    </p>
-                    <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary tabular-nums mb-4">
-                      {pack.price.toFixed(0)}€
-                    </p>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate(`/checkout/${pack.id}`)}
-                      className="w-full px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-lg transition-all">
-                      {lang === "fr" ? "Choisir" : "Choose"}
-                    </motion.button>
-                  </GlassCard>
-                </Reveal>
-              );
-            })}
+                      <motion.button
+                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(168, 85, 247, 0.4)" }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate(`/checkout/${pack.id}`)}
+                        className="w-full px-5 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-lg transition-all shadow-lg">
+                        {lang === "fr" ? "Choisir" : "Choose"}
+                      </motion.button>
+                    </GlassCard>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
 
           <Reveal delay={0.2}>
