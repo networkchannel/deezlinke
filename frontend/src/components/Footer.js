@@ -3,27 +3,20 @@ import { Equalizer } from "@/components/Equalizer";
 import { Heart, Music2 } from "lucide-react";
 
 export default function Footer() {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language || "en";
+  const { t } = useTranslation();
   return (
-    <footer className="border-t border-border-subtle bg-surface/30" data-testid="footer">
+    <footer className="border-t border-border-subtle bg-surface/30 backdrop-blur-sm" data-testid="footer">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Equalizer count={4} color="#C2FF00" height={16} />
-              <span className="font-heading font-black text-lg text-white">Deez<span className="text-lime">Link</span></span>
+              <Equalizer count={4} color="#818CF8" height={16} />
+              <span className="font-heading font-extrabold text-lg text-white">Deez<span className="text-primary-light">Link</span></span>
             </div>
-            <p className="text-text-muted text-sm leading-relaxed max-w-xs">
-              {t("footer_desc")}
-            </p>
+            <p className="text-text-muted text-sm leading-relaxed max-w-xs">{t("footer_desc")}</p>
           </div>
-          {/* Links */}
           <div>
-            <h4 className="text-white font-heading font-bold text-sm mb-4">
-              {t("footer_nav")}
-            </h4>
+            <h4 className="text-white font-heading font-semibold text-sm mb-4">{t("footer_nav")}</h4>
             <ul className="space-y-2">
               {[
                 { label: t("nav_home"), href: "/" },
@@ -37,14 +30,11 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-          {/* Payment */}
           <div>
-            <h4 className="text-white font-heading font-bold text-sm mb-4">
-              {t("footer_payment")}
-            </h4>
+            <h4 className="text-white font-heading font-semibold text-sm mb-4">{t("footer_payment")}</h4>
             <div className="flex flex-wrap gap-2">
               {["BTC", "ETH", "USDT", "LTC"].map((c) => (
-                <span key={c} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-text-secondary font-mono">{c}</span>
+                <span key={c} className="glass-card rounded-lg px-3 py-1.5 text-xs text-text-secondary font-mono">{c}</span>
               ))}
             </div>
             <p className="text-text-muted text-xs mt-4 flex items-center gap-1">

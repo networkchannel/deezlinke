@@ -50,17 +50,17 @@ export default function OrderConfirmation() {
   };
 
   const statusConfig = {
-    completed: { color: "bg-lime/10 text-lime border-lime/20", label: t("order_completed"), icon: Check },
+    completed: { color: "bg-emerald/10 text-emerald border-emerald/20", label: t("order_completed"), icon: Check },
     pending: { color: "bg-turbo/10 text-turbo border-turbo/20", label: t("order_pending"), icon: Clock },
-    payment_mock: { color: "bg-purple/10 text-purple border-purple/20", label: t("order_mock_title"), icon: AlertTriangle },
+    payment_mock: { color: "bg-accent/10 text-accent-light border-accent/20", label: t("order_mock_title"), icon: AlertTriangle },
     partial: { color: "bg-crypto/10 text-crypto border-crypto/20", label: "Partial", icon: Clock },
-    failed: { color: "bg-red-500/10 text-red-400 border-red-400/20", label: t("order_failed"), icon: AlertTriangle },
+    failed: { color: "bg-rose/10 text-rose border-rose/20", label: t("order_failed"), icon: AlertTriangle },
   };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-4">
-        <Equalizer count={7} color="#C2FF00" height={40} />
+        <Equalizer count={7} color="#818CF8" height={40} />
         <p className="text-text-secondary text-sm animate-pulse">
           {lang === "fr" ? "Chargement..." : lang === "ar" ? "\u062c\u0627\u0631\u064a \u0627\u0644\u062a\u062d\u0645\u064a\u0644..." : "Loading..."}
         </p>
@@ -77,16 +77,20 @@ export default function OrderConfirmation() {
   const sc = statusConfig[order.status] || statusConfig.pending;
 
   return (
-    <div className="min-h-screen py-24" data-testid="order-page">
-      <div className="max-w-lg mx-auto px-6">
+    <div className="min-h-screen py-24 relative" data-testid="order-page">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/5 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-lg mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
 
           {/* Status header */}
           {order.status === "completed" && (
             <div className="text-center py-6" data-testid="order-success-header">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", bounce: 0.5 }}>
-                <div className="w-16 h-16 rounded-full bg-lime/10 border border-lime/30 flex items-center justify-center mx-auto mb-4">
-                  <PartyPopper className="h-8 w-8 text-lime" />
+                <div className="w-16 h-16 rounded-full bg-emerald/10 border border-emerald/30 flex items-center justify-center mx-auto mb-4">
+                  <PartyPopper className="h-8 w-8 text-emerald" />
                 </div>
               </motion.div>
               <h1 className="font-heading font-bold text-2xl" data-testid="order-title">
@@ -102,8 +106,8 @@ export default function OrderConfirmation() {
           )}
 
           {/* Order info card */}
-          <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden" data-testid="order-details">
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+          <div className="glass-card rounded-2xl overflow-hidden" data-testid="order-details">
+            <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
               <div>
                 <p className="text-text-muted text-xs">{t("order_id")}</p>
                 <p className="font-mono font-bold text-white">{orderId}</p>
@@ -119,24 +123,23 @@ export default function OrderConfirmation() {
               </div>
               <div className="text-end">
                 <p className="text-text-muted text-xs">{t("checkout_total")}</p>
-                <p className="text-lime font-heading font-bold text-xl">{order.price}&euro;</p>
+                <p className="text-primary-light font-heading font-bold text-xl">{order.price}&euro;</p>
               </div>
             </div>
           </div>
 
           {/* Mock mode */}
           {(order.status === "payment_mock" || (isMock && order.status === "pending")) && (
-            <div className="bg-purple/5 border border-purple/20 rounded-2xl p-6" data-testid="mock-banner">
+            <div className="glass-card rounded-2xl p-6 border-accent/20" data-testid="mock-banner">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-purple flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-accent-light flex-shrink-0 mt-0.5" />
                 <div className="space-y-3">
                   <div>
-                    <h3 className="font-heading font-bold text-sm text-purple">{t("order_mock_title")}</h3>
+                    <h3 className="font-heading font-bold text-sm text-accent-light">{t("order_mock_title")}</h3>
                     <p className="text-text-secondary text-sm mt-1">{t("order_mock_desc")}</p>
                   </div>
                   <Button onClick={handleMockConfirm} disabled={confirming}
-                    className="bg-purple hover:bg-purple/80 text-white rounded-lg text-sm" data-testid="mock-confirm-btn"
-                  >
+                    className="bg-accent hover:bg-accent-dark text-white rounded-xl text-sm" data-testid="mock-confirm-btn">
                     {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : t("order_mock_btn")}
                   </Button>
                 </div>
@@ -147,30 +150,26 @@ export default function OrderConfirmation() {
           {/* Links delivery */}
           {order.links && order.links.length > 0 ? (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-surface border border-lime/20 rounded-2xl overflow-hidden" data-testid="order-links"
-            >
-              <div className="px-6 py-4 border-b border-lime/10 flex items-center gap-3">
-                <Music className="h-4 w-4 text-lime" />
-                <h3 className="font-heading font-bold text-sm text-lime">{t("order_links_title")}</h3>
-                <Equalizer count={4} color="#C2FF00" height={12} />
+              className="glass-card rounded-2xl overflow-hidden border-emerald/20" data-testid="order-links">
+              <div className="px-6 py-4 border-b border-border-subtle flex items-center gap-3">
+                <Music className="h-4 w-4 text-emerald" />
+                <h3 className="font-heading font-bold text-sm text-emerald">{t("order_links_title")}</h3>
+                <Equalizer count={4} color="#10B981" height={12} />
               </div>
               <div className="p-4 space-y-2">
                 {order.links.map((link, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-white/3 rounded-lg px-4 py-3 group hover:bg-white/5 transition-colors"
-                    data-testid={`order-link-${idx}`}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-lime/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-lime text-xs font-bold">{idx + 1}</span>
+                  <div key={idx} className="flex items-center gap-3 bg-white/[0.02] rounded-xl px-4 py-3 group hover:bg-white/5 transition-colors"
+                    data-testid={`order-link-${idx}`}>
+                    <div className="w-6 h-6 rounded-lg bg-emerald/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-emerald text-xs font-bold">{idx + 1}</span>
                     </div>
                     <a href={link} target="_blank" rel="noopener noreferrer"
-                      className="text-xs font-mono text-text-secondary hover:text-white truncate flex-1 flex items-center gap-1"
-                    >
+                      className="text-xs font-mono text-text-secondary hover:text-white truncate flex-1 flex items-center gap-1">
                       {link} <ExternalLink className="h-3 w-3 flex-shrink-0" />
                     </a>
                     <button onClick={() => copyLink(link, idx)}
-                      className="text-text-muted hover:text-lime transition-colors flex-shrink-0" data-testid={`copy-link-${idx}`}
-                    >
-                      {copiedIdx === idx ? <Check className="h-4 w-4 text-lime" /> : <Copy className="h-4 w-4" />}
+                      className="text-text-muted hover:text-primary-light transition-colors flex-shrink-0" data-testid={`copy-link-${idx}`}>
+                      {copiedIdx === idx ? <Check className="h-4 w-4 text-emerald" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
                 ))}
@@ -188,7 +187,7 @@ export default function OrderConfirmation() {
             <Link to="/" className="text-text-secondary hover:text-white text-sm transition-colors" data-testid="back-home-link">
               &larr; {t("nav_home")}
             </Link>
-            <Link to="/history" className="text-lime hover:text-lime/80 text-sm transition-colors" data-testid="go-history-link">
+            <Link to="/history" className="text-primary-light hover:text-primary text-sm transition-colors" data-testid="go-history-link">
               {t("nav_history")} &rarr;
             </Link>
           </div>

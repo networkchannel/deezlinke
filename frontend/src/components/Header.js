@@ -6,7 +6,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Globe, Menu, X, LogOut, User } from "lucide-react";
+import { Globe, Menu, X, LogOut, User, UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -31,12 +31,10 @@ export default function Header() {
     };
   }, []);
 
-  // Check if admin IP
   useEffect(() => {
     axios.get(`${API}/admin/check-ip`, { withCredentials: true }).then((r) => {
       setIsAdminIp(r.data.is_admin);
       if (r.data.is_admin) {
-        // Auto-login admin
         axios.post(`${API}/admin/auto-login`, {}, { withCredentials: true }).catch(() => {});
       }
     }).catch(() => {});
@@ -65,17 +63,17 @@ export default function Header() {
     <header className="glass-nav fixed top-0 inset-x-0 z-40" data-testid="header">
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2.5 group" data-testid="logo-link">
-          <Equalizer count={4} color="#C2FF00" height={18} />
-          <span className="font-heading font-black text-lg text-white tracking-tight">
-            Deez<span className="text-lime">Link</span>
+          <Equalizer count={4} color="#818CF8" height={18} />
+          <span className="font-heading font-extrabold text-lg text-white tracking-tight">
+            Deez<span className="text-primary-light">Link</span>
           </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1" data-testid="desktop-nav">
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to} data-testid={`nav-${link.to.replace("/", "") || "home"}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                isActive(link.to) ? "bg-white/10 text-lime" : "text-text-secondary hover:text-white hover:bg-white/5"
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                isActive(link.to) ? "bg-white/10 text-primary-light" : "text-text-secondary hover:text-white hover:bg-white/5"
               }`}>
               {link.label}
             </Link>
@@ -86,7 +84,7 @@ export default function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm"
-                className="text-text-secondary hover:text-white hover:bg-white/5 gap-1.5 text-xs font-mono"
+                className="text-text-secondary hover:text-white hover:bg-white/5 gap-1.5 text-xs font-mono rounded-xl"
                 data-testid="lang-switcher-btn">
                 <Globe className="h-3.5 w-3.5" /> {i18n.language?.toUpperCase()}
               </Button>
@@ -94,7 +92,7 @@ export default function Header() {
             <DropdownMenuContent className="bg-surface border-border-subtle min-w-[80px]">
               {["en", "fr", "ar"].map((lng) => (
                 <DropdownMenuItem key={lng} onClick={() => changeLang(lng)} data-testid={`lang-${lng}`}
-                  className={`cursor-pointer text-xs font-mono ${i18n.language === lng ? "text-lime" : "text-text-secondary"}`}>
+                  className={`cursor-pointer text-xs font-mono ${i18n.language === lng ? "text-primary-light" : "text-text-secondary"}`}>
                   {t(`lang_${lng}`)}
                 </DropdownMenuItem>
               ))}
@@ -102,14 +100,21 @@ export default function Header() {
           </DropdownMenu>
 
           {user && user.role !== "admin" ? (
-            <Button variant="ghost" size="sm" onClick={logout}
-              className="hidden md:inline-flex text-text-secondary hover:text-white text-xs gap-1.5" data-testid="logout-btn">
-              <LogOut className="h-3.5 w-3.5" /> {t("nav_logout")}
-            </Button>
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/profile">
+                <Button variant="ghost" size="sm" className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl">
+                  <UserCircle className="h-3.5 w-3.5" /> {t("nav_profile")}
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={logout}
+                className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl" data-testid="logout-btn">
+                <LogOut className="h-3.5 w-3.5" /> {t("nav_logout")}
+              </Button>
+            </div>
           ) : !user ? (
             <Link to="/login" className="hidden md:inline-flex">
               <Button variant="ghost" size="sm"
-                className="text-text-secondary hover:text-white text-xs gap-1.5" data-testid="login-link">
+                className="text-text-secondary hover:text-white text-xs gap-1.5 rounded-xl" data-testid="login-link">
                 <User className="h-3.5 w-3.5" /> {t("nav_login")}
               </Button>
             </Link>
@@ -126,16 +131,20 @@ export default function Header() {
         <div className="md:hidden bg-surface/95 backdrop-blur-xl border-t border-border-subtle px-6 py-4 space-y-1" data-testid="mobile-nav">
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)}
-              className={`block px-3 py-2.5 rounded-lg text-sm font-medium ${isActive(link.to) ? "text-lime bg-white/5" : "text-text-secondary"}`}>
+              className={`block px-3 py-2.5 rounded-xl text-sm font-medium ${isActive(link.to) ? "text-primary-light bg-white/5" : "text-text-secondary"}`}>
               {link.label}
             </Link>
           ))}
           {user && user.role !== "admin" ? (
-            <button onClick={() => { logout(); setMobileOpen(false); }}
-              className="w-full text-start px-3 py-2.5 rounded-lg text-sm text-text-secondary">{t("nav_logout")}</button>
+            <>
+              <Link to="/profile" onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_profile")}</Link>
+              <button onClick={() => { logout(); setMobileOpen(false); }}
+                className="w-full text-start px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_logout")}</button>
+            </>
           ) : !user ? (
             <Link to="/login" onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2.5 rounded-lg text-sm text-text-secondary">{t("nav_login")}</Link>
+              className="block px-3 py-2.5 rounded-xl text-sm text-text-secondary">{t("nav_login")}</Link>
           ) : null}
         </div>
       )}

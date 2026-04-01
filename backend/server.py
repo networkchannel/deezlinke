@@ -208,147 +208,198 @@ def send_email(to_email: str, subject: str, html_content: str) -> bool:
         logger.error(f"Failed to send email: {e}")
         return False
 
+def _email_base_template(content: str, direction: str = "ltr") -> str:
+    """Apple liquid-glass inspired email base template"""
+    return f"""<!DOCTYPE html>
+<html dir="{direction}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+</head>
+<body style="margin:0;padding:0;background:#050B18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;color:#F5F5F7;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050B18;">
+<tr><td align="center" style="padding:40px 20px;">
+<table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
+
+<!-- Logo -->
+<tr><td align="center" style="padding:0 0 32px;">
+  <table role="presentation" cellpadding="0" cellspacing="0">
+  <tr>
+    <td style="padding:8px 16px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border:1px solid rgba(99,102,241,0.2);border-radius:12px;">
+      <span style="font-size:22px;font-weight:800;color:#F5F5F7;letter-spacing:-0.5px;">Deez<span style="color:#818CF8;">Link</span></span>
+    </td>
+  </tr>
+  </table>
+</td></tr>
+
+<!-- Main Card -->
+<tr><td style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;">
+  <!-- Gradient Top Bar -->
+  <div style="height:4px;background:linear-gradient(90deg,#6366F1,#8B5CF6,#22D3EE,#10B981);"></div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+  <tr><td style="padding:40px 36px;">
+    {content}
+  </td></tr>
+  </table>
+</td></tr>
+
+<!-- Footer -->
+<tr><td align="center" style="padding:28px 0 0;">
+  <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.3);line-height:1.6;">
+    DeezLink &mdash; Premium Music Access<br>
+    <span style="color:rgba(255,255,255,0.2);">Secure &bull; Instant &bull; Trusted</span>
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>"""
+
+
 def send_magic_link_email(email: str, token: str, lang: str = "fr"):
-    """Send magic link authentication email"""
+    """Send magic link authentication email — Apple liquid-glass design"""
     base_url = os.environ.get('CORS_ORIGINS', 'https://deezlink.com').split(',')[0]
     magic_link = f"{base_url}/login?token={token}"
-    
-    if lang == "fr":
-        subject = "Votre lien de connexion DeezLink"
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; background: #09040D; color: #fff; padding: 40px;">
-            <div style="max-width: 500px; margin: 0 auto; background: #130A1C; border-radius: 16px; padding: 32px;">
-                <h1 style="color: #C2FF00; margin: 0 0 24px;">🎵 DeezLink</h1>
-                <p style="color: #A19BA8; font-size: 16px; line-height: 1.6;">
-                    Bonjour,<br><br>
-                    Cliquez sur le bouton ci-dessous pour vous connecter à votre compte DeezLink :
-                </p>
-                <div style="text-align: center; margin: 32px 0;">
-                    <a href="{magic_link}" style="display: inline-block; background: #C2FF00; color: #09040D; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-                        Se connecter
-                    </a>
-                </div>
-                <p style="color: #5C5666; font-size: 12px;">
-                    Ce lien expire dans 30 minutes.<br>
-                    Si vous n'avez pas demandé ce lien, ignorez cet email.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-    elif lang == "ar":
-        subject = "رابط تسجيل الدخول إلى DeezLink"
-        html = f"""
-        <!DOCTYPE html>
-        <html dir="rtl">
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; background: #09040D; color: #fff; padding: 40px;">
-            <div style="max-width: 500px; margin: 0 auto; background: #130A1C; border-radius: 16px; padding: 32px;">
-                <h1 style="color: #C2FF00; margin: 0 0 24px;">🎵 DeezLink</h1>
-                <p style="color: #A19BA8; font-size: 16px; line-height: 1.6;">
-                    مرحبًا،<br><br>
-                    انقر على الزر أدناه لتسجيل الدخول إلى حسابك:
-                </p>
-                <div style="text-align: center; margin: 32px 0;">
-                    <a href="{magic_link}" style="display: inline-block; background: #C2FF00; color: #09040D; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-                        تسجيل الدخول
-                    </a>
-                </div>
-                <p style="color: #5C5666; font-size: 12px;">
-                    تنتهي صلاحية هذا الرابط خلال 30 دقيقة.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-    else:
-        subject = "Your DeezLink Login Link"
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; background: #09040D; color: #fff; padding: 40px;">
-            <div style="max-width: 500px; margin: 0 auto; background: #130A1C; border-radius: 16px; padding: 32px;">
-                <h1 style="color: #C2FF00; margin: 0 0 24px;">🎵 DeezLink</h1>
-                <p style="color: #A19BA8; font-size: 16px; line-height: 1.6;">
-                    Hello,<br><br>
-                    Click the button below to log in to your DeezLink account:
-                </p>
-                <div style="text-align: center; margin: 32px 0;">
-                    <a href="{magic_link}" style="display: inline-block; background: #C2FF00; color: #09040D; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
-                        Log In
-                    </a>
-                </div>
-                <p style="color: #5C5666; font-size: 12px;">
-                    This link expires in 30 minutes.<br>
-                    If you didn't request this link, please ignore this email.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-    
-    return send_email(email, subject, html)
+
+    texts = {
+        "fr": {
+            "subject": "Votre lien de connexion DeezLink",
+            "greeting": "Bonjour,",
+            "body": "Cliquez sur le bouton ci-dessous pour vous connecter instantanement a votre compte DeezLink.",
+            "btn": "Se connecter",
+            "expire": "Ce lien expire dans 30 minutes.",
+            "ignore": "Si vous n'avez pas demande ce lien, ignorez cet email.",
+            "security": "Pour votre securite, ne partagez jamais ce lien.",
+        },
+        "ar": {
+            "subject": "رابط تسجيل الدخول إلى DeezLink",
+            "greeting": "مرحبا،",
+            "body": "انقر على الزر أدناه لتسجيل الدخول إلى حسابك في DeezLink.",
+            "btn": "تسجيل الدخول",
+            "expire": "تنتهي صلاحية هذا الرابط خلال 30 دقيقة.",
+            "ignore": "إذا لم تطلب هذا الرابط، يرجى تجاهل هذا البريد.",
+            "security": "لأمانك، لا تشارك هذا الرابط مع أي شخص.",
+        },
+        "en": {
+            "subject": "Your DeezLink Login Link",
+            "greeting": "Hello,",
+            "body": "Click the button below to instantly sign in to your DeezLink account.",
+            "btn": "Sign In",
+            "expire": "This link expires in 30 minutes.",
+            "ignore": "If you didn't request this link, please ignore this email.",
+            "security": "For your security, never share this link.",
+        },
+    }
+    t = texts.get(lang, texts["en"])
+    direction = "rtl" if lang == "ar" else "ltr"
+
+    content = f"""
+    <!-- Icon -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-block;width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#6366F1,#8B5CF6);line-height:64px;text-align:center;">
+        <span style="font-size:28px;">&#9889;</span>
+      </div>
+    </div>
+    <!-- Greeting -->
+    <h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#F5F5F7;text-align:center;letter-spacing:-0.3px;">{t['greeting']}</h1>
+    <p style="margin:0 0 32px;font-size:15px;color:rgba(255,255,255,0.6);text-align:center;line-height:1.7;">
+      {t['body']}
+    </p>
+    <!-- CTA Button -->
+    <div style="text-align:center;margin:0 0 32px;">
+      <a href="{magic_link}" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#6366F1,#818CF8);color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none;border-radius:14px;letter-spacing:0.2px;box-shadow:0 8px 32px rgba(99,102,241,0.35);">
+        {t['btn']}
+      </a>
+    </div>
+    <!-- Info pills -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr>
+      <td style="padding:12px 16px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.12);border-radius:12px;">
+        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">
+          &#128337; {t['expire']}<br>
+          &#128274; {t['security']}
+        </p>
+      </td>
+    </tr>
+    </table>
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);text-align:center;">{t['ignore']}</p>
+    """
+
+    html = _email_base_template(content, direction)
+    return send_email(email, t["subject"], html)
 
 def send_order_confirmation_email(email: str, order_id: str, links: List[str], lang: str = "fr"):
-    """Send order confirmation with links"""
-    links_html = "".join([f'<li style="margin: 8px 0;"><a href="{link}" style="color: #C2FF00;">{link}</a></li>' for link in links])
-    
-    if lang == "fr":
-        subject = f"Votre commande DeezLink #{order_id}"
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; background: #09040D; color: #fff; padding: 40px;">
-            <div style="max-width: 600px; margin: 0 auto; background: #130A1C; border-radius: 16px; padding: 32px;">
-                <h1 style="color: #C2FF00; margin: 0 0 24px;">🎵 DeezLink</h1>
-                <h2 style="color: #fff;">Merci pour votre achat !</h2>
-                <p style="color: #A19BA8;">Commande #{order_id}</p>
-                <div style="background: #09040D; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                    <h3 style="color: #FF0092; margin: 0 0 16px;">Vos liens d'activation :</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        {links_html}
-                    </ul>
-                </div>
-                <p style="color: #5C5666; font-size: 12px;">
-                    Chaque lien est garanti minimum 1 mois.<br>
-                    Conservez précieusement ces liens.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-    else:
-        subject = f"Your DeezLink Order #{order_id}"
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="UTF-8"></head>
-        <body style="font-family: Arial, sans-serif; background: #09040D; color: #fff; padding: 40px;">
-            <div style="max-width: 600px; margin: 0 auto; background: #130A1C; border-radius: 16px; padding: 32px;">
-                <h1 style="color: #C2FF00; margin: 0 0 24px;">🎵 DeezLink</h1>
-                <h2 style="color: #fff;">Thank you for your purchase!</h2>
-                <p style="color: #A19BA8;">Order #{order_id}</p>
-                <div style="background: #09040D; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                    <h3 style="color: #FF0092; margin: 0 0 16px;">Your activation links:</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        {links_html}
-                    </ul>
-                </div>
-                <p style="color: #5C5666; font-size: 12px;">
-                    Each link is guaranteed for a minimum of 1 month.<br>
-                    Keep these links safe.
-                </p>
-            </div>
-        </body>
-        </html>
-        """
-    
-    return send_email(email, subject, html)
+    """Send order confirmation with links — Apple liquid-glass design"""
+    links_rows = ""
+    for i, link in enumerate(links):
+        links_rows += f"""
+        <tr>
+          <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="32" style="vertical-align:middle;">
+                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,rgba(34,211,238,0.15),rgba(16,185,129,0.15));text-align:center;line-height:28px;font-size:12px;font-weight:700;color:#22D3EE;">{i+1}</div>
+              </td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <a href="{link}" style="color:#818CF8;font-size:13px;font-family:monospace;text-decoration:none;word-break:break-all;">{link}</a>
+              </td>
+            </tr>
+            </table>
+          </td>
+        </tr>"""
+
+    texts = {
+        "fr": {
+            "subject": f"Votre commande DeezLink #{order_id}",
+            "title": "Merci pour votre achat !",
+            "order_label": "Commande",
+            "links_title": "Vos liens d'activation",
+            "guarantee": "Chaque lien est garanti minimum 1 mois.",
+            "keep": "Conservez precieusement ces liens.",
+        },
+        "en": {
+            "subject": f"Your DeezLink Order #{order_id}",
+            "title": "Thank you for your purchase!",
+            "order_label": "Order",
+            "links_title": "Your activation links",
+            "guarantee": "Each link is guaranteed for a minimum of 1 month.",
+            "keep": "Keep these links safe.",
+        },
+    }
+    t = texts.get(lang, texts["en"])
+
+    content = f"""
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-block;width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#10B981,#22D3EE);line-height:64px;text-align:center;">
+        <span style="font-size:28px;">&#10004;</span>
+      </div>
+    </div>
+    <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#F5F5F7;text-align:center;">{t['title']}</h1>
+    <p style="margin:0 0 28px;font-size:13px;color:rgba(255,255,255,0.4);text-align:center;font-family:monospace;">{t['order_label']} #{order_id}</p>
+    <!-- Links Card -->
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;margin-bottom:24px;">
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="font-size:14px;font-weight:600;color:#22D3EE;">&#127925; {t['links_title']}</span>
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        {links_rows}
+      </table>
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td style="padding:12px 16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.1);border-radius:12px;">
+      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">
+        &#128737; {t['guarantee']}<br>&#128274; {t['keep']}
+      </p>
+    </td></tr>
+    </table>
+    """
+
+    html = _email_base_template(content)
+    return send_email(email, t["subject"], html)
 
 # --- Auth Helpers ---
 def hash_password(password: str) -> str:
@@ -433,6 +484,9 @@ class LinkImportRequest(BaseModel):
 
 class LinkManualAdd(BaseModel):
     link: str
+
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
 
 # --- Custom Pricing Logic ---
 def calculate_custom_price(quantity: int, loyalty_discount: int = 0) -> dict:
@@ -566,6 +620,65 @@ async def get_me(user: dict = Depends(get_current_user)):
     user["loyalty_tier"] = get_loyalty_tier(user.get("loyalty_points", 0))
     return user
 
+# --- Profile Routes ---
+@api_router.get("/user/profile")
+async def get_profile(user: dict = Depends(get_current_user)):
+    """Get full user profile with order stats"""
+    email = user["email"]
+    # Count orders
+    total_orders = await db.orders.count_documents({"email": email})
+    completed_orders = await db.orders.count_documents({"email": email, "status": "completed"})
+    # Total spent
+    pipeline = [
+        {"$match": {"email": email, "status": "completed"}},
+        {"$group": {"_id": None, "total": {"$sum": "$price"}}}
+    ]
+    result = await db.orders.aggregate(pipeline).to_list(1)
+    total_spent = result[0]["total"] if result else 0
+
+    loyalty_tier = get_loyalty_tier(user.get("loyalty_points", 0))
+    # Next tier
+    points = user.get("loyalty_points", 0)
+    next_tier = None
+    for tier_name, tier_data in LOYALTY_TIERS.items():
+        if tier_data["min_points"] > points:
+            next_tier = {"name": tier_name, **tier_data}
+            break
+
+    return {
+        "id": user["_id"],
+        "email": user["email"],
+        "name": user.get("name", ""),
+        "role": user.get("role", "user"),
+        "loyalty_points": points,
+        "loyalty_tier": loyalty_tier,
+        "next_tier": next_tier,
+        "points_to_next": next_tier["min_points"] - points if next_tier else 0,
+        "total_orders": total_orders,
+        "completed_orders": completed_orders,
+        "total_spent": round(total_spent, 2),
+        "country": user.get("country", "Unknown"),
+        "created_at": user.get("created_at", ""),
+    }
+
+@api_router.put("/user/profile")
+async def update_profile(req: ProfileUpdateRequest, user: dict = Depends(get_current_user)):
+    """Update user profile"""
+    update_fields = {}
+    if req.name is not None:
+        update_fields["name"] = req.name.strip()
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    await db.users.update_one(
+        {"email": user["email"]},
+        {"$set": update_fields}
+    )
+    updated = await db.users.find_one({"email": user["email"]})
+    updated["_id"] = str(updated["_id"])
+    updated.pop("password_hash", None)
+    updated["loyalty_tier"] = get_loyalty_tier(updated.get("loyalty_points", 0))
+    return updated
+
 # --- Magic Link Auth with Anti-Abuse ---
 @api_router.post("/auth/magic")
 async def magic_link_request(req: MagicLinkRequest, request: Request):
@@ -610,8 +723,9 @@ async def magic_link_request(req: MagicLinkRequest, request: Request):
     rate_limiter.record_request(ip_key)
     rate_limiter.record_request(email_key)
     
-    # Generate magic token
+    # Generate magic token + session_id for polling
     magic_token = secrets.token_urlsafe(32)
+    session_id = secrets.token_urlsafe(16)
     expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
     
     # Store token in DB with IP for security tracking
@@ -619,6 +733,8 @@ async def magic_link_request(req: MagicLinkRequest, request: Request):
     await db.magic_tokens.insert_one({
         "email": email,
         "token": magic_token,
+        "session_id": session_id,
+        "verified": False,
         "expiry": expiry.isoformat(),
         "request_ip": client_ip,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -635,7 +751,7 @@ async def magic_link_request(req: MagicLinkRequest, request: Request):
     # Send email
     send_magic_link_email(email, magic_token, req.language)
     
-    return {"message": "Magic link sent", "email": email}
+    return {"message": "Magic link sent", "email": email, "session_id": session_id}
 
 @api_router.post("/auth/magic/verify")
 async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
@@ -660,9 +776,9 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
                 data = resp.json()
                 if data.get("status") == "success":
                     country = data.get("countryCode", "Unknown")
-    except:
+    except Exception:
         pass
-    
+
     # Get or create user
     user = await db.users.find_one({"email": email})
     if not user:
@@ -679,14 +795,17 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
         })
         user = await db.users.find_one({"_id": result.inserted_id})
     else:
-        # Update last IP and country if changed
         await db.users.update_one(
             {"_id": user["_id"]},
             {"$set": {"last_ip": client_ip, "last_login": datetime.now(timezone.utc).isoformat()}}
         )
     
-    # Delete used token
-    await db.magic_tokens.delete_one({"token": req.token})
+    # Mark session as verified (for polling) and store JWT
+    access_token = create_access_token(str(user["_id"]), email, user.get("role", "user"))
+    await db.magic_tokens.update_one(
+        {"token": req.token},
+        {"$set": {"verified": True, "access_token": access_token, "user_id": str(user["_id"])}}
+    )
     
     # Log security event
     await db.security_logs.insert_one({
@@ -697,18 +816,55 @@ async def magic_link_verify(req: MagicLinkVerifyRequest, request: Request):
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
-    # Create session
-    access_token = create_access_token(str(user["_id"]), email, user.get("role", "user"))
-    response = JSONResponse(content={
+    # Return page with auto-close or redirect
+    user_data = {
         "id": str(user["_id"]),
         "email": user["email"],
         "name": user.get("name", ""),
         "role": user.get("role", "user"),
         "loyalty_points": user.get("loyalty_points", 0),
         "loyalty_tier": get_loyalty_tier(user.get("loyalty_points", 0))
-    })
+    }
+    response = JSONResponse(content=user_data)
     response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=86400 * 30, path="/")
     return response
+
+
+@api_router.get("/auth/magic/check/{session_id}")
+async def magic_link_check(session_id: str):
+    """Polling endpoint: check if magic link was clicked and verified"""
+    token_doc = await db.magic_tokens.find_one({"session_id": session_id})
+    if not token_doc:
+        return {"status": "expired", "verified": False}
+    
+    expiry = datetime.fromisoformat(token_doc["expiry"])
+    if datetime.now(timezone.utc) > expiry:
+        await db.magic_tokens.delete_one({"session_id": session_id})
+        return {"status": "expired", "verified": False}
+    
+    if token_doc.get("verified"):
+        access_token = token_doc.get("access_token", "")
+        # Get user data
+        user = await db.users.find_one({"email": token_doc["email"]})
+        user_data = None
+        if user:
+            user_data = {
+                "id": str(user["_id"]),
+                "email": user["email"],
+                "name": user.get("name", ""),
+                "role": user.get("role", "user"),
+                "loyalty_points": user.get("loyalty_points", 0),
+                "loyalty_tier": get_loyalty_tier(user.get("loyalty_points", 0))
+            }
+        # Clean up the token
+        await db.magic_tokens.delete_one({"session_id": session_id})
+        
+        response = JSONResponse(content={"status": "verified", "verified": True, "user": user_data})
+        if access_token:
+            response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, samesite="none", max_age=86400 * 30, path="/")
+        return response
+    
+    return {"status": "pending", "verified": False}
 
 # --- Admin IP Check & Auto-Login ---
 @api_router.get("/admin/check-ip")
@@ -800,7 +956,7 @@ async def get_geo(request: Request):
     
     # Skip for private/local IPs
     if client_ip.startswith("127.") or client_ip.startswith("10.") or client_ip.startswith("192.168.") or client_ip == "localhost":
-        logger.info(f"Local IP detected, using defaults")
+        logger.info("Local IP detected, using defaults")
         return result
     
     try:

@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Equalizer } from "@/components/Equalizer";
-import { Disc, Users, SlidersHorizontal, Minus, Plus, Play, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Package, Users, Sparkles, Music2, Star, BarChart3 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -15,105 +16,86 @@ export default function Offers() {
   const navigate = useNavigate();
   const [packs, setPacks] = useState([]);
   const [customQty, setCustomQty] = useState(10);
-  const [customPricing, setCustomPricing] = useState(null);
+  const [pricing, setPricing] = useState(null);
   const lang = i18n.language || "en";
 
   useEffect(() => {
-    axios.get(`${API}/packs`).then((r) => setPacks(r.data.packs)).catch(() => {});
+    axios.get(`${API}/packs`).then((r) => setPacks(r.data.packs || r.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => setCustomPricing(r.data)).catch(() => {});
-    }, 80);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => {
+      axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => setPricing(r.data)).catch(() => {});
+    }, 150);
+    return () => clearTimeout(t);
   }, [customQty]);
 
-  const iconMap = { disc: Disc, users: Users };
+  const packIcons = [Package, Users];
+  const packColors = [
+    { gradient: "from-primary to-primary-light", bg: "bg-primary/5", text: "text-primary-light", border: "border-primary/20" },
+    { gradient: "from-accent to-accent-light", bg: "bg-accent/5", text: "text-accent-light", border: "border-accent/20" },
+  ];
+
+  const tiers = useMemo(() => [
+    { range: "1–9", price: "5.00€" },
+    { range: "10–49", price: "3.50€" },
+    { range: "50–99", price: "3.00€" },
+    { range: "100–199", price: "2.80€" },
+    { range: "200–499", price: "2.00€" },
+    { range: "500+", price: "1.50€" },
+  ], []);
 
   return (
-    <div className="min-h-screen py-24" data-testid="offers-page">
-      <div className="max-w-5xl mx-auto px-6 md:px-12">
+    <div className="min-h-screen py-24 relative" data-testid="offers-page">
+      {/* Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] rounded-full bg-primary/[0.06] blur-[130px]" />
+        <div className="absolute bottom-0 right-1/3 w-[500px] h-[500px] rounded-full bg-accent/[0.05] blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <Equalizer count={7} color="#FF0092" height={28} />
-          <h1 className="text-4xl sm:text-5xl tracking-tighter font-black font-heading mt-6 mb-4" data-testid="offers-title">
-            {t("offers_title")}
+          <Equalizer count={5} color="#818CF8" height={24} />
+          <h1 className="font-heading font-extrabold text-3xl md:text-4xl mt-4">
+            <span className="gradient-text">{t("offers_title")}</span>
           </h1>
-          <p className="text-text-secondary font-light text-base md:text-lg max-w-xl mx-auto">{t("offers_subtitle")}</p>
-          {/* Guarantee badge */}
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 mt-6 bg-lime/10 border border-lime/20 rounded-full px-5 py-2"
-            data-testid="guarantee-badge">
-            <ShieldCheck className="h-4 w-4 text-lime" />
-            <span className="text-lime text-sm font-semibold">{t("pack_guarantee")}</span>
-          </motion.div>
+          <p className="text-text-secondary text-sm mt-3 max-w-md mx-auto">{t("offers_sub")}</p>
         </motion.div>
 
-        {/* 2 FIXED PACKS */}
-        <div className="grid md:grid-cols-2 gap-6 mb-10">
-          {packs.map((pack, i) => {
-            const Icon = iconMap[pack.icon] || Disc;
-            const isHl = pack.highlighted;
+        {/* Fixed Packs */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
+          {packs.filter((p) => p.id !== "custom").map((pack, i) => {
+            const Icon = packIcons[i] || Package;
+            const color = packColors[i] || packColors[0];
             return (
-              <motion.div key={pack.id}
-                initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.12 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className={`relative flex flex-col rounded-2xl border p-8 transition-all duration-300 group
-                  ${isHl
-                    ? "bg-gradient-to-b from-[#1a0a28] to-[#2A0018] border-rose/50 shadow-[0_0_40px_rgba(255,0,146,0.12)]"
-                    : "bg-surface border-white/8 hover:border-white/20"}`}
-                data-testid={`pack-card-${pack.id}`}
-              >
-                {isHl && (
-                  <div className="absolute -top-3 inset-x-0 flex justify-center">
-                    <Badge className="bg-rose text-white border-0 text-[10px] tracking-widest px-4 py-1 shadow-lg shadow-rose/30">
-                      {t("pack_popular")}
+              <motion.div key={pack.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="glass-card glass-card-hover rounded-2xl p-8 flex flex-col transition-all"
+                data-testid={`pack-${pack.id}`}>
+                <div className="flex items-start justify-between mb-6">
+                  <div className={`w-12 h-12 rounded-xl ${color.bg} border ${color.border} flex items-center justify-center`}>
+                    <Icon className={`h-5 w-5 ${color.text}`} />
+                  </div>
+                  {pack.popular && (
+                    <Badge className="bg-teal/10 text-teal border-teal/20 text-[10px] font-semibold gap-1">
+                      <Star className="h-2.5 w-2.5" /> {t("offers_popular")}
                     </Badge>
-                  </div>
-                )}
-
-                <div className="flex items-start justify-between mb-6 mt-1">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-2xl ${isHl ? "bg-rose/15" : "bg-white/5"} transition-colors group-hover:scale-105 duration-300`}>
-                      <Icon className={`h-7 w-7 ${isHl ? "text-rose" : "text-text-secondary"}`} />
-                    </div>
-                    <div>
-                      <h3 className="font-heading font-bold text-xl">{t(pack.name_key)}</h3>
-                      <p className="text-text-muted text-sm">{t(`pack_desc_${pack.id}`)}</p>
-                    </div>
-                  </div>
-                  {isHl && <Equalizer count={4} color="#FF0092" height={20} />}
+                  )}
                 </div>
 
-                {/* Guarantee line */}
-                <div className="flex items-center gap-1.5 mb-5">
-                  <ShieldCheck className={`h-3.5 w-3.5 ${isHl ? "text-rose/70" : "text-lime/70"}`} />
-                  <span className="text-text-muted text-xs">{t("pack_guarantee")}</span>
-                </div>
+                <h3 className="font-heading font-bold text-xl mb-1">{pack.name}</h3>
+                <p className="text-text-secondary text-sm mb-6">{pack.description}</p>
 
-                <div className="flex items-end justify-between mt-auto">
+                <div className="mt-auto flex items-end justify-between">
                   <div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-heading font-black text-white">{pack.price.toFixed(0)}</span>
-                      <span className="text-2xl font-heading text-text-muted">&euro;</span>
-                    </div>
-                    <p className="text-text-muted text-sm font-mono mt-1">
-                      {pack.quantity} {t("pack_links")} &bull; {pack.unit_price.toFixed(2)}&euro; {t("pack_per_unit")}
-                    </p>
-                    {pack.discount > 0 && (
-                      <Badge className="mt-2 bg-lime/10 text-lime border-lime/20 text-xs">
-                        -{pack.discount}% &bull; {t("pack_save")} {((5 - pack.unit_price) * pack.quantity).toFixed(0)}&euro;
-                      </Badge>
-                    )}
+                    <span className={`font-heading font-extrabold text-3xl ${color.text}`}>{pack.price}€</span>
+                    <span className="text-text-muted text-xs ml-1.5">/ {pack.quantity} {lang === "fr" ? "lien" + (pack.quantity > 1 ? "s" : "") : "link" + (pack.quantity > 1 ? "s" : "")}</span>
                   </div>
                   <Button onClick={() => navigate(`/checkout/${pack.id}`)}
-                    className={`rounded-xl font-bold px-8 py-5 transition-all duration-200 ${isHl
-                      ? "btn-lime hover:shadow-[0_0_20px_rgba(194,255,0,0.25)]"
-                      : "bg-white/5 text-white hover:bg-white/10 border border-white/10 hover:border-white/20"}`}
-                    data-testid={`buy-pack-${pack.id}`}
-                  >
-                    <Play className="h-4 w-4 fill-current me-2" /> {t("pack_buy")}
+                    className="btn-primary rounded-xl px-5 py-2.5 text-sm font-semibold gap-1.5 group"
+                    data-testid={`pack-${pack.id}-cta`}>
+                    {t("offers_buy")} <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </Button>
                 </div>
               </motion.div>
@@ -121,101 +103,74 @@ export default function Offers() {
           })}
         </div>
 
-        {/* CUSTOM PACK */}
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          data-testid="custom-pack-section"
-        >
-          <div className="bg-surface border border-lime/20 rounded-2xl p-8 relative overflow-hidden hover:border-lime/35 transition-colors duration-300">
-            <div className="absolute top-0 end-0 w-72 h-72 bg-gradient-to-bl from-lime/5 to-transparent rounded-bl-full pointer-events-none" />
-            <div className="absolute bottom-0 start-0 w-40 h-40 bg-gradient-to-tr from-rose/3 to-transparent rounded-tr-full pointer-events-none" />
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl bg-lime/10">
-                    <SlidersHorizontal className="h-7 w-7 text-lime" />
-                  </div>
-                  <div>
-                    <h3 className="font-heading font-bold text-xl flex items-center gap-2">
-                      {t("offers_custom")}
-                      <Sparkles className="h-4 w-4 text-lime/60" />
-                    </h3>
-                    <p className="text-text-muted text-sm">{t("offers_custom_desc")} &bull; 1 - 1000 {t("pack_links")}</p>
-                  </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-lime/70" />
-                  <span className="text-text-muted text-xs">{t("pack_guarantee")}</span>
-                </div>
-              </div>
-
-              {/* Quantity selector */}
-              <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => setCustomQty(Math.max(1, customQty - (customQty > 100 ? 10 : customQty > 10 ? 5 : 1)))}
-                  className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-95"
-                  data-testid="custom-qty-minus"><Minus className="h-5 w-5" /></button>
-
-                <div className="flex-1">
-                  <input type="range" min={1} max={1000} value={customQty}
-                    onChange={(e) => setCustomQty(Number(e.target.value))}
-                    className="w-full h-2.5 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-lime [&::-webkit-slider-thumb]:shadow-[0_0_15px_rgba(194,255,0,0.5)] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-shadow [&::-webkit-slider-thumb]:hover:shadow-[0_0_25px_rgba(194,255,0,0.7)]"
-                    data-testid="custom-qty-slider" />
-                  {/* Tier markers */}
-                  <div className="flex justify-between text-[10px] text-text-muted font-mono mt-2 px-1">
-                    {[1, 3, 5, 10, 25, 50, 100, 250, 500, 1000].map((n) => (
-                      <button key={n} onClick={() => setCustomQty(n)}
-                        className={`hover:text-lime transition-colors ${customQty === n ? "text-lime font-bold" : ""}`}
-                        data-testid={`tier-${n}`}>{n}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <button onClick={() => setCustomQty(Math.min(1000, customQty + (customQty >= 100 ? 10 : customQty >= 10 ? 5 : 1)))}
-                  className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-secondary hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-95"
-                  data-testid="custom-qty-plus"><Plus className="h-5 w-5" /></button>
-
-                <div className="w-24 h-14 rounded-xl bg-void border border-lime/30 flex items-center justify-center">
-                  <span className="text-lime font-heading font-black text-2xl" data-testid="custom-qty-display">{customQty}</span>
-                </div>
-              </div>
-
-              {/* Pricing result */}
-              {customPricing && (
-                <motion.div
-                  key={customPricing.total}
-                  initial={{ opacity: 0.8 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-void/50 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 border border-white/5"
-                >
-                  <div className="flex items-center gap-8 flex-wrap">
-                    <div>
-                      <span className="text-text-muted text-xs block mb-1">{t("checkout_total")}</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-5xl font-heading font-black text-white" data-testid="custom-total">
-                          {customPricing.total.toFixed(customPricing.total % 1 === 0 ? 0 : 2)}
-                        </span>
-                        <span className="text-2xl text-text-muted">&euro;</span>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-text-secondary text-sm font-mono">
-                        {customPricing.unit_price.toFixed(2)}&euro; {t("pack_per_unit")}
-                      </p>
-                      {customPricing.discount > 0 && (
-                        <Badge className="bg-lime/10 text-lime border-lime/20 text-xs" data-testid="custom-discount">
-                          -{customPricing.discount}% &bull; {t("pack_save")} {customPricing.savings}&euro;
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <Button onClick={() => navigate(`/checkout/custom?qty=${customQty}`)}
-                    className="btn-lime rounded-xl px-10 py-6 font-bold text-base whitespace-nowrap hover:shadow-[0_0_20px_rgba(194,255,0,0.25)] transition-shadow"
-                    data-testid="buy-custom-pack">
-                    <Play className="h-5 w-5 fill-current me-2" /> {t("pack_buy")}
-                  </Button>
-                </motion.div>
-              )}
+        {/* Custom Pack */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="max-w-3xl mx-auto glass-card rounded-3xl p-8 md:p-10" data-testid="custom-pack">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-teal/5 border border-teal/10 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-teal" />
             </div>
+            <div>
+              <h3 className="font-heading font-bold text-xl">{t("offers_custom")}</h3>
+              <p className="text-text-secondary text-xs">{t("offers_custom_sub")}</p>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-text-secondary text-sm">{t("offers_quantity")}</span>
+              <span className="font-heading font-bold text-2xl text-teal">{customQty}</span>
+            </div>
+            <Slider value={[customQty]} min={1} max={1000} step={1}
+              onValueChange={([v]) => setCustomQty(v)}
+              className="[&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-teal [&_.bg-primary]:to-teal-light"
+              data-testid="custom-qty-slider" />
+            <div className="flex justify-between text-[10px] text-text-muted mt-2">
+              <span>1</span><span>1000</span>
+            </div>
+          </div>
+
+          {pricing && (
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="glass-card rounded-xl p-4 text-center">
+                <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t("offers_unit_price")}</p>
+                <p className="font-heading font-bold text-lg text-teal">{pricing.unit_price}€</p>
+              </div>
+              <div className="glass-card rounded-xl p-4 text-center">
+                <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t("offers_total")}</p>
+                <p className="font-heading font-bold text-lg text-white">{pricing.total_price}€</p>
+              </div>
+              <div className="glass-card rounded-xl p-4 text-center">
+                <p className="text-text-muted text-[10px] uppercase tracking-wider mb-1">{t("offers_savings")}</p>
+                <p className="font-heading font-bold text-lg text-emerald">
+                  {pricing.savings > 0 ? `-${pricing.savings}€` : "—"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <Button onClick={() => navigate(`/checkout/custom?qty=${customQty}`)}
+            className="w-full btn-teal rounded-xl py-5 text-sm font-bold gap-2 group"
+            data-testid="custom-pack-cta">
+            <Music2 className="h-4 w-4" /> {t("offers_buy")}
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+          </Button>
+        </motion.div>
+
+        {/* Pricing Tiers */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="max-w-3xl mx-auto mt-12">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="h-4 w-4 text-text-muted" />
+            <h4 className="text-text-secondary text-sm font-medium">{t("offers_pricing_grid")}</h4>
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+            {tiers.map((tier, i) => (
+              <div key={i} className="glass-card rounded-xl p-3 text-center">
+                <p className="text-text-muted text-[10px] mb-1">{tier.range}</p>
+                <p className="font-heading font-bold text-sm text-white">{tier.price}</p>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>

@@ -62,7 +62,6 @@ export default function Checkout() {
         const resp = await axios.post(`${API}/orders/create`, { pack_id: packId, email: email.trim() });
         data = resp.data;
       }
-      // Store email in localStorage for "My Orders" visibility
       localStorage.setItem("deezlink_email", email.trim().toLowerCase());
       window.dispatchEvent(new Event("deezlink_email_update"));
 
@@ -92,54 +91,56 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-24 relative" data-testid="checkout-page">
-      <div className="absolute inset-0 bg-gradient-to-b from-rose/5 via-void to-void" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
+      </div>
 
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative w-full max-w-md mx-6">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative w-full max-w-md mx-6 z-10">
         <button onClick={() => navigate("/offers")} className="flex items-center gap-2 text-text-secondary hover:text-white text-sm mb-6 transition-colors" data-testid="checkout-back-btn">
           <ArrowLeft className="h-4 w-4" /> {t("checkout_back")}
         </button>
 
-        <div className="bg-surface/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-          {/* Header bar */}
-          <div className="bg-gradient-to-r from-rose/20 to-purple/20 px-6 py-4 flex items-center justify-between">
+        <div className="glass-card rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-4 flex items-center justify-between border-b border-border-subtle">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-                {isCustom ? <SlidersHorizontal className="h-5 w-5 text-lime" /> : <Music className="h-5 w-5 text-white" />}
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                {isCustom ? <SlidersHorizontal className="h-5 w-5 text-primary-light" /> : <Music className="h-5 w-5 text-primary-light" />}
               </div>
               <div>
                 <h2 className="font-heading font-bold text-sm text-white">{packLabel}</h2>
                 <p className="text-text-secondary text-xs">{displayQty} {t("pack_links")} &bull; Deezer Premium</p>
               </div>
             </div>
-            <Equalizer count={4} color="#FF0092" height={16} />
+            <Equalizer count={4} color="#818CF8" height={16} />
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Price display */}
-            <div className="bg-white/3 rounded-xl p-5 space-y-3" data-testid="checkout-summary">
+            {/* Price */}
+            <div className="glass-card rounded-xl p-5 space-y-3" data-testid="checkout-summary">
               <div className="flex justify-between items-center">
                 <span className="text-text-secondary text-sm">{t("checkout_total")}</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-lime font-heading font-black text-3xl">{displayPrice?.toFixed(0)}</span>
+                  <span className="text-primary-light font-heading font-black text-3xl">{displayPrice?.toFixed(0)}</span>
                   <span className="text-text-muted text-lg">&euro;</span>
                 </div>
               </div>
               {displayDiscount > 0 && (
                 <div className="flex items-center justify-between">
                   <span className="text-text-muted text-xs">{displayUnitPrice?.toFixed(2)}&euro; {t("pack_per_unit")}</span>
-                  <Badge className="bg-lime/10 text-lime border-lime/20 text-[10px]">
+                  <Badge className="bg-emerald/10 text-emerald border-emerald/20 text-[10px]">
                     -{displayDiscount}% &bull; {t("pack_save")} {displaySavings}&euro;
                   </Badge>
                 </div>
               )}
             </div>
 
-            {/* Crypto badges */}
+            {/* Crypto */}
             <div className="flex items-center gap-2">
               <Zap className="h-3.5 w-3.5 text-crypto" />
               <div className="flex gap-1.5">
                 {["BTC", "ETH", "USDT", "LTC"].map((c) => (
-                  <span key={c} className="bg-white/5 border border-white/10 rounded px-2 py-0.5 text-[10px] text-text-muted font-mono">{c}</span>
+                  <span key={c} className="glass-card rounded px-2 py-0.5 text-[10px] text-text-muted font-mono">{c}</span>
                 ))}
               </div>
             </div>
@@ -149,7 +150,7 @@ export default function Checkout() {
                 <label className="text-sm text-text-secondary mb-2 block">{t("checkout_email")}</label>
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                   placeholder={t("checkout_email_placeholder")}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-text-muted focus:ring-lime/50 focus:border-lime/50 h-12"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-text-muted focus:ring-primary/50 focus:border-primary/50 h-12 rounded-xl"
                   data-testid="checkout-email-input" required
                 />
                 <p className="text-text-muted text-[10px] mt-1.5">
@@ -157,12 +158,11 @@ export default function Checkout() {
                 </p>
               </div>
 
-              {error && <p className="text-red-400 text-sm" data-testid="checkout-error">{error}</p>}
+              {error && <p className="text-rose text-sm" data-testid="checkout-error">{error}</p>}
 
               <Button type="submit" disabled={loading}
-                className="w-full btn-lime rounded-xl py-6 text-base font-bold flex items-center justify-center gap-2"
-                data-testid="checkout-pay-btn"
-              >
+                className="w-full btn-primary rounded-xl py-6 text-base font-bold flex items-center justify-center gap-2"
+                data-testid="checkout-pay-btn">
                 {loading ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> {t("checkout_processing")}</>
                 ) : (

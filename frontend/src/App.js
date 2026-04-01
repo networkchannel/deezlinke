@@ -11,6 +11,7 @@ import OrderHistory from "@/pages/OrderHistory";
 import Login from "@/pages/Login";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Profile from "@/pages/Profile";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <Route path="/order/:orderId" element={<OrderConfirmation />} />
               <Route path="/history" element={<OrderHistory />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
             </Routes>

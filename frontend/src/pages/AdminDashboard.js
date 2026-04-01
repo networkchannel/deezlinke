@@ -151,27 +151,27 @@ export default function AdminDashboard() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-purple" />
+        <Loader2 className="h-8 w-8 animate-spin text-accent-light" />
       </div>
     );
   }
 
   const statusColor = {
-    completed: "bg-lime/10 text-lime border-lime/20",
+    completed: "bg-emerald/10 text-emerald border-emerald/20",
     pending: "bg-turbo/10 text-turbo border-turbo/20",
-    payment_mock: "bg-purple/10 text-purple border-purple/20",
+    payment_mock: "bg-accent/10 text-accent-light border-accent/20",
     failed: "bg-red-500/10 text-red-400 border-red-400/20",
   };
 
   const eventTypeColor = {
     failed_login: "bg-red-500/10 text-red-400",
-    successful_login: "bg-lime/10 text-lime",
-    magic_link_requested: "bg-purple/10 text-purple",
-    magic_link_verified: "bg-lime/10 text-lime",
+    successful_login: "bg-emerald/10 text-emerald",
+    magic_link_requested: "bg-accent/10 text-accent-light",
+    magic_link_verified: "bg-emerald/10 text-emerald",
     magic_link_rate_limit_ip: "bg-red-500/10 text-red-400",
     magic_link_rate_limit_email: "bg-turbo/10 text-turbo",
     admin_block_ip: "bg-rose/10 text-rose",
-    admin_unblock_ip: "bg-lime/10 text-lime",
+    admin_unblock_ip: "bg-emerald/10 text-emerald",
   };
 
   const getCountryFlag = (code) => {
@@ -204,9 +204,9 @@ export default function AdminDashboard() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8" data-testid="admin-stats">
               {[
-                { label: "Revenus", value: `${stats.total_revenue?.toFixed(2) || 0}€`, icon: DollarSign, color: "#C2FF00" },
-                { label: "Commandes", value: stats.total_orders, icon: Package, color: "#A238FF" },
-                { label: "Liens dispo", value: stats.available_links, icon: Link2, color: "#FF0092" },
+                { label: "Revenus", value: `${stats.total_revenue?.toFixed(2) || 0}€`, icon: DollarSign, color: "#818CF8" },
+                { label: "Commandes", value: stats.total_orders, icon: Package, color: "#8B5CF6" },
+                { label: "Liens dispo", value: stats.available_links, icon: Link2, color: "#22D3EE" },
                 { label: "Vendus", value: stats.sold_links, icon: TrendingUp, color: "#F7931A" },
                 { label: "Utilisateurs", value: stats.total_users, icon: Users, color: "#00D4FF" },
               ].map((stat, i) => (
@@ -269,14 +269,14 @@ export default function AdminDashboard() {
                 {/* Top Customers */}
                 <div className="admin-widget">
                   <h3 className="font-heading font-bold text-sm mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-lime" />
+                    <TrendingUp className="h-4 w-4 text-emerald" />
                     Top Clients
                   </h3>
                   <div className="space-y-3">
                     {analytics?.top_customers?.slice(0, 5).map((customer, i) => (
                       <div key={i} className="flex justify-between items-center p-2 bg-white/3 rounded-lg">
                         <span className="text-sm text-text-secondary truncate flex-1">{customer._id}</span>
-                        <Badge className="bg-lime/10 text-lime ml-2">{customer.total_spent?.toFixed(2)}€</Badge>
+                        <Badge className="bg-emerald/10 text-emerald ml-2">{customer.total_spent?.toFixed(2)}€</Badge>
                       </div>
                     ))}
                     {(!analytics?.top_customers || analytics.top_customers.length === 0) && (
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
                 {/* Users by Country */}
                 <div className="admin-widget">
                   <h3 className="font-heading font-bold text-sm mb-4 flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-purple" />
+                    <Globe className="h-4 w-4 text-accent-light" />
                     Utilisateurs par Pays
                   </h3>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -302,8 +302,8 @@ export default function AdminDashboard() {
                             <span className="text-sm text-text-secondary">{data.country_name || code}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-purple/10 text-purple">{data.count} users</Badge>
-                            <Badge className="bg-lime/10 text-lime">{data.revenue?.toFixed(0) || 0}€</Badge>
+                            <Badge className="bg-accent/10 text-accent-light">{data.count} users</Badge>
+                            <Badge className="bg-emerald/10 text-emerald">{data.revenue?.toFixed(0) || 0}€</Badge>
                           </div>
                         </div>
                       ))}
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                     {orders.map((order) => (
                       <TableRow key={order.order_id} className="border-border-subtle hover:bg-white/3">
                         <TableCell className="font-mono text-xs">
-                          <Link to={`/order/${order.order_id}`} className="text-lime hover:underline">
+                          <Link to={`/order/${order.order_id}`} className="text-emerald hover:underline">
                             {order.order_id}
                           </Link>
                         </TableCell>
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
                   {/* Add single */}
                   <div className="admin-widget">
                     <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                      <Plus className="h-4 w-4 text-lime" />
+                      <Plus className="h-4 w-4 text-emerald" />
                       {t("admin_add_link")}
                     </h3>
                     <div className="flex gap-3">
@@ -446,7 +446,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {msg && <p className="text-lime text-sm">{msg}</p>}
+                {msg && <p className="text-emerald text-sm">{msg}</p>}
 
                 {/* Links table */}
                 <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
                         <TableRow key={i} className="border-border-subtle hover:bg-white/3">
                           <TableCell className="font-mono text-xs truncate max-w-[300px]">{link.url}</TableCell>
                           <TableCell>
-                            <Badge className={link.status === "available" ? "bg-lime/10 text-lime border-lime/20" : "bg-text-muted/10 text-text-muted border-text-muted/20"}>
+                            <Badge className={link.status === "available" ? "bg-emerald/10 text-emerald border-emerald/20" : "bg-text-muted/10 text-text-muted border-text-muted/20"}>
                               {link.status}
                             </Badge>
                           </TableCell>
@@ -516,7 +516,7 @@ export default function AdminDashboard() {
                         <TableCell>
                           <Badge className={
                             u.loyalty_tier?.tier === "diamond" ? "bg-cyan-500/10 text-cyan-400" :
-                            u.loyalty_tier?.tier === "platinum" ? "bg-purple/10 text-purple" :
+                            u.loyalty_tier?.tier === "platinum" ? "bg-accent/10 text-accent-light" :
                             u.loyalty_tier?.tier === "gold" ? "bg-yellow-500/10 text-yellow-400" :
                             u.loyalty_tier?.tier === "silver" ? "bg-gray-400/10 text-gray-300" :
                             "bg-orange-500/10 text-orange-400"
@@ -566,17 +566,17 @@ export default function AdminDashboard() {
                     </div>
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
-                        <Activity className="h-4 w-4 text-purple" />
+                        <Activity className="h-4 w-4 text-accent-light" />
                         <span className="text-text-muted text-xs">Événements (24h)</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-purple">{stats.security.recent_events_24h}</span>
+                      <span className="font-heading font-black text-2xl text-accent-light">{stats.security.recent_events_24h}</span>
                     </div>
                     <div className="admin-widget">
                       <div className="flex items-center gap-2 mb-2">
-                        <Shield className="h-4 w-4 text-lime" />
+                        <Shield className="h-4 w-4 text-emerald" />
                         <span className="text-text-muted text-xs">Rate Limits Actifs</span>
                       </div>
-                      <span className="font-heading font-black text-2xl text-lime">{stats.security.active_rate_limits}</span>
+                      <span className="font-heading font-black text-2xl text-emerald">{stats.security.active_rate_limits}</span>
                     </div>
                   </div>
                 )}
@@ -615,7 +615,7 @@ export default function AdminDashboard() {
                             <span className="font-mono text-sm text-red-400">{item.ip}</span>
                             <span className="text-xs text-text-muted ml-2">jusqu'à {new Date(item.until).toLocaleTimeString()}</span>
                           </div>
-                          <Button size="sm" variant="ghost" onClick={() => handleUnblockIp(item.ip)} className="text-lime hover:text-lime/80">
+                          <Button size="sm" variant="ghost" onClick={() => handleUnblockIp(item.ip)} className="text-emerald hover:text-emerald">
                             <CheckCircle className="h-4 w-4" />
                           </Button>
                         </div>
@@ -648,7 +648,7 @@ export default function AdminDashboard() {
                 {/* Security Logs */}
                 <div className="admin-widget">
                   <h3 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-purple" />
+                    <Eye className="h-4 w-4 text-accent-light" />
                     Journal de Sécurité
                   </h3>
                   <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">

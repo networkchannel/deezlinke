@@ -1,4 +1,4 @@
-export function Equalizer({ count = 5, color = "#FF0092", height = 24 }) {
+export function Equalizer({ count = 5, color = "#6366F1", height = 24 }) {
   return (
     <div
       className="flex items-end gap-[2px]"

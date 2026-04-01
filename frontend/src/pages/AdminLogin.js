@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Equalizer } from "@/components/Equalizer";
-import { Loader2 } from "lucide-react";
+import { Loader2, Shield } from "lucide-react";
 
 export default function AdminLogin() {
   const { t } = useTranslation();
@@ -36,55 +36,43 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-24" data-testid="admin-login-page">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm mx-6"
-      >
+    <div className="min-h-screen flex items-center justify-center py-24 relative" data-testid="admin-login-page">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-accent/5 blur-[120px]" />
+      </div>
+
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+        className="relative w-full max-w-sm mx-6 z-10">
         <div className="text-center mb-8">
-          <Equalizer count={5} color="#A238FF" height={24} />
+          <Equalizer count={5} color="#A78BFA" height={24} />
           <h1 className="font-heading font-bold text-2xl mt-4" data-testid="admin-login-title">
             {t("admin_login_title")}
           </h1>
         </div>
 
-        <div className="bg-surface border border-border-subtle rounded-2xl p-8">
+        <div className="glass-card rounded-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm text-text-secondary mb-2 block">{t("admin_email")}</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/5 border-border-subtle text-white placeholder:text-text-muted focus:ring-purple focus:border-purple"
-                data-testid="admin-email-input"
-                required
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-text-muted focus:ring-accent/50 focus:border-accent/50 h-12 rounded-xl"
+                data-testid="admin-email-input" required
               />
             </div>
             <div>
               <label className="text-sm text-text-secondary mb-2 block">{t("admin_password")}</label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-white/5 border-border-subtle text-white placeholder:text-text-muted focus:ring-purple focus:border-purple"
-                data-testid="admin-password-input"
-                required
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-text-muted focus:ring-accent/50 focus:border-accent/50 h-12 rounded-xl"
+                data-testid="admin-password-input" required
               />
             </div>
 
-            {error && (
-              <p className="text-red-400 text-sm" data-testid="admin-login-error">{error}</p>
-            )}
+            {error && <p className="text-rose text-sm" data-testid="admin-login-error">{error}</p>}
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-purple hover:bg-purple/80 text-white rounded-xl py-5 font-bold"
-              data-testid="admin-login-btn"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("admin_login_btn")}
+            <Button type="submit" disabled={loading}
+              className="w-full bg-gradient-to-r from-accent to-accent-light hover:from-accent-dark hover:to-accent text-white rounded-xl py-5 font-bold flex items-center justify-center gap-2"
+              data-testid="admin-login-btn">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Shield className="h-4 w-4" /> {t("admin_login_btn")}</>}
             </Button>
           </form>
         </div>
