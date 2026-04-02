@@ -29,8 +29,336 @@ import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Import security middleware
-from security_middleware import validate_security
+# ═══════════════════════════════════════════════════════════
+# SYSTÈME ANTI-FRAUDE ULTRA-SÉCURISÉ (merged from security_middleware.py)
+# ═══════════════════════════════════════════════════════════
+
+# Fingerprints valides avec leur timestamp
+VALID_FINGERPRINTS: Dict[str, dict] = {}
+
+# Tokens utilisés (pour anti-replay)
+USED_TOKENS: Dict[str, float] = {}
+
+# Séquences par fingerprint (pour détecter les replays)
+FINGERPRINT_SEQUENCES: Dict[str, int] = defaultdict(int)
+
+# Tentatives par IP (pour le système anti-fraude)
+IP_ATTEMPTS: Dict[str, list] = defaultdict(list)
+
+def cleanup_expired_data():
+    """Nettoie les données expirées (appelé périodiquement)"""
+    now = time.time()
+    
+    # Nettoyer tokens expirés (>5 minutes)
+    expired_tokens = [tk for tk, ts in USED_TOKENS.items() if now - ts > 300]
+    for tk in expired_tokens:
+        del USED_TOKENS[tk]
+    
+    # Nettoyer fingerprints inactifs (>1h)
+    expired_fps = [fp for fp, data in VALID_FINGERPRINTS.items() 
+                   if now - data.get('last_seen', 0) > 3600]
+    for fp in expired_fps:
+        del VALID_FINGERPRINTS[fp]
+        if fp in FINGERPRINT_SEQUENCES:
+            del FINGERPRINT_SEQUENCES[fp]
+    
+    # Nettoyer tentatives IP (>1h)
+    for ip in list(IP_ATTEMPTS.keys()):
+        IP_ATTEMPTS[ip] = [ts for ts in IP_ATTEMPTS[ip] if now - ts < 3600]
+        if not IP_ATTEMPTS[ip]:
+            del IP_ATTEMPTS[ip]
+
+def validate_fingerprint_security(fp: str, telemetry: dict) -> bool:
+    """Valide et enregistre un fingerprint"""
+    if not fp or len(fp) != 64:  # SHA256 hash
+        return False
+    
+    now = time.time()
+    
+    # Enregistrer ou mettre à jour
+    if fp not in VALID_FINGERPRINTS:
+        VALID_FINGERPRINTS[fp] = {
+            'first_seen': now,
+            'last_seen': now,
+            'request_count': 0,
+            'cookie': telemetry.get('ck', '')
+        }
+    else:
+        VALID_FINGERPRINTS[fp]['last_seen'] = now
+    
+    VALID_FINGERPRINTS[fp]['request_count'] += 1
+    
+    return True
+
+def validate_token_security(token: str, fp: str, telemetry: dict) -> bool:
+    """Valide un token rotatif et détecte les replays"""
+    if not token or len(token) != 64:
+        return False
+    
+    now = time.time()
+    timestamp = telemetry.get('ts', 0) / 1000.0  # ms → s
+    
+    # Vérifier timestamp (max 60s de décalage)
+    if abs(now - timestamp) > 60:
+        return False
+    
+    # Vérifier si token déjà utilisé (replay attack)
+    if token in USED_TOKENS:
+        return False
+    
+    # Enregistrer le token comme utilisé
+    USED_TOKENS[token] = now
+    
+    # Vérifier séquence monotone croissante (anti-replay)
+    seq = telemetry.get('seq', 0)
+    if seq <= FINGERPRINT_SEQUENCES[fp]:
+        return False  # Séquence invalide ou rejouée
+    
+    FINGERPRINT_SEQUENCES[fp] = seq
+    
+    return True
+
+def validate_cookie_security(cookie: str, fp: str) -> bool:
+    """Valide le cookie de sécurité"""
+    if not cookie or len(cookie) != 64:
+        return False
+    
+    # Vérifier correspondance avec le fingerprint enregistré
+    if fp in VALID_FINGERPRINTS:
+        stored_cookie = VALID_FINGERPRINTS[fp].get('cookie', '')
+        if stored_cookie and stored_cookie != cookie:
+            return False  # Cookie ne correspond pas
+    
+    return True
+
+def check_ip_rate_limit_security(ip: str, max_requests: int = 20, window: int = 60) -> bool:
+    """Vérifie le rate limiting par IP"""
+    now = time.time()
+    
+    # Enregistrer la tentative
+    IP_ATTEMPTS[ip].append(now)
+    
+    # Compter les tentatives dans la fenêtre
+    recent = [ts for ts in IP_ATTEMPTS[ip] if now - ts < window]
+    IP_ATTEMPTS[ip] = recent
+    
+    return len(recent) <= max_requests
+
+async def validate_security(request: Request) -> dict:
+    """
+    Middleware de validation sécuritaire complète
+    Retourne le payload déchiffré ou lève HTTPException
+    """
+    
+    # Nettoyage périodique (tous les 100 requêtes environ)
+    if len(USED_TOKENS) % 100 == 0:
+        cleanup_expired_data()
+    
+    # Récupérer l'IP
+    client_ip = request.client.host
+    
+    # Vérifier rate limit IP
+    if not check_ip_rate_limit_security(client_ip, max_requests=30, window=60):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests from this IP"
+        )
+    
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid request body"
+        )
+    
+    # Extraire telemetry
+    telemetry = body.get('_t', {})
+    
+    if not telemetry:
+        raise HTTPException(
+            status_code=403,
+            detail="Missing security telemetry"
+        )
+    
+    fp = telemetry.get('fp', '')
+    token = telemetry.get('tk', '')
+    cookie = telemetry.get('ck', '')
+    nonce = telemetry.get('nonce', '')
+    
+    # Validation fingerprint
+    if not validate_fingerprint_security(fp, telemetry):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid browser fingerprint"
+        )
+    
+    # Validation token (anti-replay)
+    if not validate_token_security(token, fp, telemetry):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid or expired security token"
+        )
+    
+    # Validation cookie
+    if not validate_cookie_security(cookie, fp):
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid security cookie"
+        )
+    
+    # Vérifier nonce unique
+    if not nonce or len(nonce) < 16:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid nonce"
+        )
+    
+    encrypted_data = body.get('_d', '')
+    
+    return {
+        'fingerprint': fp,
+        'telemetry': telemetry,
+        'encrypted_payload': encrypted_data,
+        'validated': True
+    }
+
+def require_security(func):
+    """
+    Décorateur pour protéger une route avec validation sécuritaire
+    """
+    async def wrapper(request: Request, *args, **kwargs):
+        security = await validate_security(request)
+        return await func(request, security, *args, **kwargs)
+    return wrapper
+
+# ═══════════════════════════════════════════════════════════
+# GIFT CARD SYSTEM (merged from gift_cards.py)
+# ═══════════════════════════════════════════════════════════
+
+def generate_gift_card_code() -> str:
+    """Generate a secure random gift card code"""
+    # Format: DEEZ-XXXX-XXXX-XXXX
+    parts = []
+    for _ in range(3):
+        part = secrets.token_hex(2).upper()
+        parts.append(part)
+    return f"DEEZ-{'-'.join(parts)}"
+
+def hash_gift_card_code(code: str) -> str:
+    """Hash gift card code for storage (prevent rainbow table attacks)"""
+    return hashlib.sha256(code.encode()).hexdigest()
+
+async def create_gift_card(
+    amount: float,
+    purchaser_email: str,
+    recipient_email: Optional[str] = None,
+    recipient_name: Optional[str] = None,
+    message: Optional[str] = None,
+    validity_days: int = 365
+) -> dict:
+    """Create a new gift card"""
+    code = generate_gift_card_code()
+    code_hash = hash_gift_card_code(code)
+    
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(days=validity_days)
+    
+    gift_card = {
+        "code_hash": code_hash,
+        "amount": amount,
+        "balance": amount,
+        "purchaser_email": purchaser_email,
+        "recipient_email": recipient_email,
+        "recipient_name": recipient_name,
+        "message": message,
+        "created_at": now,
+        "expires_at": expires_at,
+        "used": False,
+        "used_at": None,
+        "used_by": None,
+        "validation_attempts": 0,
+    }
+    
+    await db.gift_cards.insert_one(gift_card)
+    
+    return {
+        "code": code,
+        "amount": amount,
+        "recipient_email": recipient_email,
+        "recipient_name": recipient_name,
+        "expires_at": expires_at,
+    }
+
+async def validate_gift_card(code: str, user_email: str) -> dict:
+    """Validate and apply gift card (with rate limiting protection)"""
+    code_hash = hash_gift_card_code(code)
+    
+    gift_card = await db.gift_cards.find_one({"code_hash": code_hash}, {"_id": 0})
+    
+    if not gift_card:
+        return {"valid": False, "error": "Code invalide"}
+    
+    # Increment validation attempts
+    await db.gift_cards.update_one(
+        {"code_hash": code_hash},
+        {"$inc": {"validation_attempts": 1}}
+    )
+    
+    # Check if card is already fully used
+    if gift_card["used"] or gift_card["balance"] <= 0:
+        return {"valid": False, "error": "Cette carte cadeau a déjà été utilisée"}
+    
+    # Check expiration
+    if gift_card["expires_at"] < datetime.now(timezone.utc):
+        return {"valid": False, "error": "Cette carte cadeau a expiré"}
+    
+    return {
+        "valid": True,
+        "balance": gift_card["balance"],
+        "code_hash": code_hash,
+    }
+
+async def apply_gift_card_to_order(code_hash: str, amount_to_use: float, user_email: str, order_id: str) -> dict:
+    """Apply gift card balance to an order"""
+    gift_card = await db.gift_cards.find_one({"code_hash": code_hash}, {"_id": 0})
+    
+    if not gift_card or gift_card["balance"] < amount_to_use:
+        return {"success": False, "error": "Solde insuffisant"}
+    
+    new_balance = gift_card["balance"] - amount_to_use
+    
+    update_data = {
+        "balance": new_balance,
+    }
+    
+    # If fully used, mark as used
+    if new_balance == 0:
+        update_data["used"] = True
+        update_data["used_at"] = datetime.now(timezone.utc)
+        update_data["used_by"] = user_email
+    
+    await db.gift_cards.update_one(
+        {"code_hash": code_hash},
+        {"$set": update_data}
+    )
+    
+    # Log transaction
+    await db.gift_card_transactions.insert_one({
+        "code_hash": code_hash,
+        "order_id": order_id,
+        "user_email": user_email,
+        "amount_used": amount_to_use,
+        "timestamp": datetime.now(timezone.utc),
+    })
+    
+    return {
+        "success": True,
+        "amount_applied": amount_to_use,
+        "remaining_balance": new_balance,
+    }
+
+# ═══════════════════════════════════════════════════════════
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -189,6 +517,63 @@ LANG_MAP = {
 
 app = FastAPI(title="DeezLink API")
 api_router = APIRouter(prefix="/api")
+
+# ==================== PATCH: Router pour /undefined/api/* ====================
+from fastapi.responses import Response
+import httpx
+
+@app.api_route("/undefined/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], include_in_schema=False)
+async def proxy_undefined_api(request: Request, path: str):
+    """
+    Patch pour gérer les requêtes avec /undefined/api/* 
+    Proxy interne vers /api/*
+    """
+    corrected_path = f"/api/{path}"
+    logger.warning(f"⚠️ Proxying malformed URL: /undefined/api/{path} → {corrected_path}")
+    
+    # Recréer la requête vers le bon endpoint en interne
+    # On va utiliser un sous-appel à l'app FastAPI
+    from starlette.testclient import TestClient
+    
+    # Lire le body si présent
+    body = None
+    if request.method in ["POST", "PUT", "PATCH"]:
+        body = await request.body()
+    
+    # Créer une nouvelle requête vers le bon path
+    scope = request.scope.copy()
+    scope["path"] = corrected_path
+    scope["raw_path"] = corrected_path.encode()
+    
+    # Réinitialiser le body pour qu'il soit lisible
+    async def receive():
+        return {"type": "http.request", "body": body or b""}
+    
+    # Créer un sender pour capturer la réponse
+    response_started = False
+    status_code = 200
+    headers = []
+    body_parts = []
+    
+    async def send(message):
+        nonlocal response_started, status_code, headers, body_parts
+        if message["type"] == "http.response.start":
+            response_started = True
+            status_code = message["status"]
+            headers = message.get("headers", [])
+        elif message["type"] == "http.response.body":
+            body_parts.append(message.get("body", b""))
+    
+    # Appeler l'app avec le nouveau scope
+    await app(scope, receive, send)
+    
+    # Construire la réponse
+    response_body = b"".join(body_parts)
+    return Response(
+        content=response_body,
+        status_code=status_code,
+        headers={k.decode(): v.decode() for k, v in headers}
+    )
 
 # --- Email Helper ---
 def send_email(to_email: str, subject: str, html_content: str) -> bool:
@@ -1666,12 +2051,7 @@ async def startup():
         logger.info(f"Seeded {len(demo_links)} demo links")
 
 # ==================== GIFT CARD SYSTEM ====================
-from gift_cards import (
-    create_gift_card,
-    validate_gift_card,
-    apply_gift_card_to_order,
-    hash_gift_card_code
-)
+# Note: Gift card functions are now integrated at the top of this file (lines 344-447)
 
 class GiftCardPurchase(BaseModel):
     amount: float = Field(..., gt=0, le=500)
